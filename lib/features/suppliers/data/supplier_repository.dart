@@ -1,0 +1,111 @@
+import '../../../core/services/supabase_service.dart';
+import 'supplier_model.dart';
+
+class SupplierRepository {
+  static const _table = 'suppliers';
+
+  static Future<List<Supplier>> getAll({
+    String? search,
+    String? supplyType,
+  }) async {
+    final client = SupabaseService.client;
+    var query = client.from(_table).select();
+
+    if (search != null && search.isNotEmpty) {
+      query = query.ilike('name', '%$search%');
+    }
+    if (supplyType != null && supplyType.isNotEmpty) {
+      query = query.eq('supply_type', supplyType);
+    }
+
+    final data = await query.order('name');
+    return (data as List).map((json) => Supplier.fromMap(json)).toList();
+  }
+
+  static Future<Supplier?> getById(String id) async {
+    final client = SupabaseService.client;
+    final response =
+        await client.from(_table).select().eq('id', id).maybeSingle();
+    if (response == null) return null;
+    return Supplier.fromMap(response);
+  }
+
+  static Future<Supplier> create({
+    required String name,
+    String? phone,
+    String? address,
+    String? city,
+    required String supplyType,
+  }) async {
+    final client = SupabaseService.client;
+
+    final insertMap = {
+      'name': name.trim(),
+      if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
+      if (address != null && address.trim().isNotEmpty)
+        'address': address.trim(),
+      if (city != null && city.trim().isNotEmpty) 'city': city.trim(),
+      'supply_type': supplyType,
+    };
+
+    final response =
+        await client.from(_table).insert(insertMap).select().single();
+
+    await SupabaseService.logAudit(
+      action: 'create',
+      tableName: _table,
+      recordId: response['id'],
+      newData: insertMap,
+      description: 'Fournisseur créé : $name',
+    );
+
+    return Supplier.fromMap(response);
+  }
+
+  static Future<Supplier> update({
+    required String id,
+    required String name,
+    String? phone,
+    String? address,
+    String? city,
+    required String supplyType,
+  }) async {
+    final client = SupabaseService.client;
+
+    final old = await client.from(_table).select().eq('id', id).single();
+
+    final updateMap = {
+      'name': name.trim(),
+      'phone': phone?.trim().isEmpty == true ? null : phone?.trim(),
+      'address': address?.trim().isEmpty == true ? null : address?.trim(),
+      'city': city?.trim().isEmpty == true ? null : city?.trim(),
+      'supply_type': supplyType,
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+
+    await client.from(_table).update(updateMap).eq('id', id);
+
+    await SupabaseService.logAudit(
+      action: 'update',
+      tableName: _table,
+      recordId: id,
+      oldData: old,
+      newData: updateMap,
+      description: 'Fournisseur modifié : $name',
+    );
+
+    final updated =
+        await client.from(_table).select().eq('id', id).single();
+    return Supplier.fromMap(updated);
+  }
+
+  static Future<double> getTotalDebt() async {
+    final client = SupabaseService.client;
+    final data = await client.from(_table).select('total_debt');
+    double total = 0;
+    for (final row in data as List) {
+      total += (row['total_debt'] as num?)?.toDouble() ?? 0;
+    }
+    return total;
+  }
+}
