@@ -16,6 +16,13 @@ import '../../features/inventory/screens/raw_material_list_screen.dart';
 import '../../features/inventory/screens/raw_material_form_screen.dart';
 import '../../features/inventory/data/product_model.dart';
 import '../../features/inventory/data/raw_material_model.dart';
+import '../../features/production/screens/production_order_list_screen.dart';
+import '../../features/production/screens/production_order_form_screen.dart';
+import '../../features/production/screens/production_order_detail_screen.dart';
+import '../../features/production/screens/production_log_screen.dart';
+import '../../features/production/screens/production_stock_entry_screen.dart';
+import '../../features/production/screens/recipe_list_screen.dart';
+import '../../features/production/screens/recipe_form_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
     ref.keepAlive();
