@@ -9,7 +9,6 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_utils.dart';
 import '../data/purchase_order_model.dart';
 import '../data/purchase_order_repository.dart';
-import '../providers/purchase_order_provider.dart';
 
 class PurchaseOrderListScreen extends ConsumerStatefulWidget {
   const PurchaseOrderListScreen({super.key});

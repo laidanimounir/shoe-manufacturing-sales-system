@@ -24,6 +24,15 @@ import '../../features/production/screens/production_stock_entry_screen.dart';
 import '../../features/production/screens/recipe_list_screen.dart';
 import '../../features/production/screens/recipe_form_screen.dart';
 import '../../features/production/data/recipe_model.dart';
+import '../../features/suppliers/screens/supplier_list_screen.dart';
+import '../../features/suppliers/screens/supplier_form_screen.dart';
+import '../../features/suppliers/screens/supplier_detail_screen.dart';
+import '../../features/suppliers/screens/purchase_order_list_screen.dart';
+import '../../features/suppliers/screens/purchase_order_form_screen.dart';
+import '../../features/suppliers/screens/purchase_order_detail_screen.dart';
+import '../../features/suppliers/screens/supplier_payment_screen.dart';
+import '../../features/suppliers/data/supplier_model.dart';
+import '../../features/suppliers/data/purchase_order_model.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
     ref.keepAlive();
@@ -142,6 +151,51 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) =>
                 RecipeFormScreen(recipe: state.extra as Recipe?),
           ),
+          GoRoute(
+            path: '/suppliers',
+            name: 'suppliers',
+            builder: (context, state) => const SupplierListScreen(),
+          ),
+          GoRoute(
+            path: '/suppliers/new',
+            name: 'supplier-new',
+            builder: (context, state) =>
+                SupplierFormScreen(supplier: state.extra as Supplier?),
+          ),
+          GoRoute(
+            path: '/suppliers/:id',
+            name: 'supplier-detail',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return SupplierDetailScreen(supplierId: id);
+            },
+          ),
+          GoRoute(
+            path: '/purchases',
+            name: 'purchases',
+            builder: (context, state) => const PurchaseOrderListScreen(),
+          ),
+          GoRoute(
+            path: '/purchases/new',
+            name: 'purchase-new',
+            builder: (context, state) => const PurchaseOrderFormScreen(),
+          ),
+          GoRoute(
+            path: '/purchases/:id',
+            name: 'purchase-detail',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return PurchaseOrderDetailScreen(orderId: id);
+            },
+          ),
+          GoRoute(
+            path: '/purchases/:id/payment',
+            name: 'purchase-payment',
+            builder: (context, state) {
+              final order = state.extra as PurchaseOrder;
+              return SupplierPaymentScreen(order: order);
+            },
+          ),
         ],
       ),
     ],
@@ -192,6 +246,7 @@ class _DesktopShellState extends State<_DesktopShell> {
     if (location.startsWith('/raw-materials')) return 3;
     if (location.startsWith('/production')) return 4;
     if (location.startsWith('/recipes')) return 5;
+    if (location.startsWith('/suppliers') || location.startsWith('/purchases')) return 6;
     return 0;
   }
 
@@ -267,6 +322,9 @@ class _DesktopShellState extends State<_DesktopShell> {
         break;
       case 5:
         context.go('/recipes');
+        break;
+      case 6:
+        context.go('/suppliers');
         break;
     }
   }
@@ -398,9 +456,15 @@ class _MobileShell extends StatelessWidget {
               title: const Text('Fournisseurs'),
               onTap: () {
                 Navigator.of(ctx).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Bientôt disponible'), behavior: SnackBarBehavior.floating),
-                );
+                context.go('/suppliers');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.receipt_long_outlined),
+              title: const Text('Bons de commande'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                context.go('/purchases');
               },
             ),
             ListTile(

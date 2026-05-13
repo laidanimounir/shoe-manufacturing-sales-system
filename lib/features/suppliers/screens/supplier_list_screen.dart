@@ -8,7 +8,6 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../data/supplier_model.dart';
 import '../data/supplier_repository.dart';
-import '../providers/supplier_provider.dart';
 
 class SupplierListScreen extends ConsumerStatefulWidget {
   const SupplierListScreen({super.key});

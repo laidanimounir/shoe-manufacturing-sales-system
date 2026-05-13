@@ -9,7 +9,6 @@ import '../../../core/utils/date_utils.dart';
 import '../data/supplier_model.dart';
 import '../data/supplier_repository.dart';
 import '../data/purchase_order_repository.dart';
-import '../providers/supplier_provider.dart';
 
 class SupplierDetailScreen extends ConsumerStatefulWidget {
   final String supplierId;

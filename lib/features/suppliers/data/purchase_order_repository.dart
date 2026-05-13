@@ -142,12 +142,6 @@ class PurchaseOrderRepository {
   }) async {
     final client = SupabaseService.client;
 
-    final order = await client
-        .from(_table)
-        .select()
-        .eq('id', orderId)
-        .single();
-
     final items = await client
         .from(_itemsTable)
         .select()

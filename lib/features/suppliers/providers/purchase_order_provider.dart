@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/purchase_order_model.dart';
+import '../data/purchase_order_item_model.dart';
 import '../data/purchase_order_repository.dart';
 
 final purchaseOrderStatusFilterProvider =
