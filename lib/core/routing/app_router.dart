@@ -5,6 +5,9 @@ import '../../core/services/supabase_service.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/dashboard/screens/owner_dashboard.dart';
+import '../../features/warehouses/screens/warehouse_list_screen.dart';
+import '../../features/warehouses/screens/warehouse_form_screen.dart';
+import '../../features/warehouses/screens/warehouse_detail_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -27,6 +30,24 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/dashboard',
             name: 'dashboard',
             builder: (context, state) => const OwnerDashboard(),
+          ),
+          GoRoute(
+            path: '/warehouses',
+            name: 'warehouses',
+            builder: (context, state) => const WarehouseListScreen(),
+          ),
+          GoRoute(
+            path: '/warehouses/new',
+            name: 'warehouse-new',
+            builder: (context, state) => const WarehouseFormScreen(),
+          ),
+          GoRoute(
+            path: '/warehouses/:id',
+            name: 'warehouse-detail',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return WarehouseDetailScreen(warehouseId: id);
+            },
           ),
         ],
       ),
@@ -73,6 +94,7 @@ class _DesktopShellState extends State<_DesktopShell> {
   int _selectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/dashboard')) return 0;
+    if (location.startsWith('/warehouses')) return 1;
     return 0;
   }
 
@@ -124,7 +146,9 @@ class _DesktopShellState extends State<_DesktopShell> {
       case 0:
         context.go('/dashboard');
         break;
-      // More routes will be added later
+      case 1:
+        context.go('/warehouses');
+        break;
     }
   }
 
