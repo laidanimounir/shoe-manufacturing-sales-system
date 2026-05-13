@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../data/warehouse_model.dart';
 import '../data/warehouse_repository.dart';
@@ -213,7 +212,7 @@ class _WarehouseFormScreenState extends State<WarehouseFormScreen> {
                             style: theme.textTheme.bodySmall,
                           ),
                           value: _isActive,
-                          activeColor: isDark
+                          activeTrackColor: isDark
                               ? AppColors.darkSuccess
                               : AppColors.lightSuccess,
                           onChanged: _isSaving

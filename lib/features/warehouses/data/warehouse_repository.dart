@@ -9,7 +9,7 @@ class WarehouseRepository {
     var query = client.from(_table).select().order('name');
 
     if (search != null && search.isNotEmpty) {
-      query = query.ilike('name', '%$search%');
+      query = query.filter('name', 'ilike', '%$search%');
     }
 
     final data = await query;

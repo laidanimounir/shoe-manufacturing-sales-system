@@ -5,7 +5,6 @@ import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../data/warehouse_model.dart';
 import '../data/warehouse_repository.dart';
-import '../providers/warehouse_provider.dart';
 import 'warehouse_form_screen.dart';
 
 class WarehouseDetailScreen extends ConsumerStatefulWidget {
