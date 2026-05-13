@@ -9,6 +9,13 @@ import '../../features/warehouses/screens/warehouse_list_screen.dart';
 import '../../features/warehouses/screens/warehouse_form_screen.dart';
 import '../../features/warehouses/screens/warehouse_detail_screen.dart';
 import '../../features/warehouses/data/warehouse_model.dart';
+import '../../features/inventory/screens/product_list_screen.dart';
+import '../../features/inventory/screens/product_form_screen.dart';
+import '../../features/inventory/screens/product_detail_screen.dart';
+import '../../features/inventory/screens/raw_material_list_screen.dart';
+import '../../features/inventory/screens/raw_material_form_screen.dart';
+import '../../features/inventory/data/product_model.dart';
+import '../../features/inventory/data/raw_material_model.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
     ref.keepAlive();
@@ -51,6 +58,36 @@ final routerProvider = Provider<GoRouter>((ref) {
               final id = state.pathParameters['id']!;
               return WarehouseDetailScreen(warehouseId: id);
             },
+          ),
+          GoRoute(
+            path: '/products',
+            name: 'products',
+            builder: (context, state) => const ProductListScreen(),
+          ),
+          GoRoute(
+            path: '/products/new',
+            name: 'product-new',
+            builder: (context, state) =>
+                ProductFormScreen(product: state.extra as Product?),
+          ),
+          GoRoute(
+            path: '/products/:id',
+            name: 'product-detail',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return ProductDetailScreen(productId: id);
+            },
+          ),
+          GoRoute(
+            path: '/raw-materials',
+            name: 'raw-materials',
+            builder: (context, state) => const RawMaterialListScreen(),
+          ),
+          GoRoute(
+            path: '/raw-materials/new',
+            name: 'raw-material-new',
+            builder: (context, state) =>
+                RawMaterialFormScreen(material: state.extra as RawMaterial?),
           ),
         ],
       ),
@@ -98,6 +135,8 @@ class _DesktopShellState extends State<_DesktopShell> {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/dashboard')) return 0;
     if (location.startsWith('/warehouses')) return 1;
+    if (location.startsWith('/products')) return 2;
+    if (location.startsWith('/raw-materials')) return 3;
     return 0;
   }
 
@@ -116,6 +155,11 @@ class _DesktopShellState extends State<_DesktopShell> {
       icon: Icon(Icons.inventory_2_outlined),
       selectedIcon: Icon(Icons.inventory_2),
       label: Text('Produits'),
+    ),
+    NavigationRailDestination(
+      icon: Icon(Icons.category_outlined),
+      selectedIcon: Icon(Icons.category),
+      label: Text('Matières'),
     ),
     NavigationRailDestination(
       icon: Icon(Icons.precision_manufacturing_outlined),

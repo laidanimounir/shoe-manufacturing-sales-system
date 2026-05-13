@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../data/product_model.dart';
 import '../data/product_repository.dart';
