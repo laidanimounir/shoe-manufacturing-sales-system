@@ -23,6 +23,7 @@ import '../../features/production/screens/production_log_screen.dart';
 import '../../features/production/screens/production_stock_entry_screen.dart';
 import '../../features/production/screens/recipe_list_screen.dart';
 import '../../features/production/screens/recipe_form_screen.dart';
+import '../../features/production/data/recipe_model.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
     ref.keepAlive();
@@ -95,6 +96,51 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'raw-material-new',
             builder: (context, state) =>
                 RawMaterialFormScreen(material: state.extra as RawMaterial?),
+          ),
+          GoRoute(
+            path: '/production',
+            name: 'production',
+            builder: (context, state) => const ProductionOrderListScreen(),
+          ),
+          GoRoute(
+            path: '/production/new',
+            name: 'production-new',
+            builder: (context, state) => const ProductionOrderFormScreen(),
+          ),
+          GoRoute(
+            path: '/production/:id',
+            name: 'production-detail',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return ProductionOrderDetailScreen(orderId: id);
+            },
+          ),
+          GoRoute(
+            path: '/production/:id/log',
+            name: 'production-log',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return ProductionLogScreen(orderId: id);
+            },
+          ),
+          GoRoute(
+            path: '/production/:id/entry',
+            name: 'production-entry',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return ProductionStockEntryScreen(orderId: id);
+            },
+          ),
+          GoRoute(
+            path: '/recipes',
+            name: 'recipes',
+            builder: (context, state) => const RecipeListScreen(),
+          ),
+          GoRoute(
+            path: '/recipes/new',
+            name: 'recipe-new',
+            builder: (context, state) =>
+                RecipeFormScreen(recipe: state.extra as Recipe?),
           ),
         ],
       ),
