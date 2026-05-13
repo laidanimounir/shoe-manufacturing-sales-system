@@ -196,6 +196,12 @@ class _DesktopShellState extends State<_DesktopShell> {
       case 1:
         context.go('/warehouses');
         break;
+      case 2:
+        context.go('/products');
+        break;
+      case 3:
+        context.go('/raw-materials');
+        break;
     }
   }
 
@@ -296,16 +302,31 @@ class _MobileShell extends StatelessWidget {
   final Widget child;
   const _MobileShell({required this.child});
 
+  int _currentIndex(BuildContext context) {
+    final location = GoRouterState.of(context).matchedLocation;
+    if (location.startsWith('/dashboard')) return 0;
+    if (location.startsWith('/products')) return 1;
+    if (location.startsWith('/raw-materials')) return 2;
+    if (location.startsWith('/production')) return 3;
+    return 0;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: child,
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
+        currentIndex: _currentIndex(context),
         onTap: (index) {
           switch (index) {
             case 0:
               context.go('/dashboard');
+              break;
+            case 1:
+              context.go('/products');
+              break;
+            case 2:
+              context.go('/raw-materials');
               break;
           }
         },
@@ -316,14 +337,14 @@ class _MobileShell extends StatelessWidget {
             label: 'Accueil',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.point_of_sale_outlined),
-            activeIcon: Icon(Icons.point_of_sale),
-            label: 'Ventes',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.inventory_2_outlined),
             activeIcon: Icon(Icons.inventory_2),
             label: 'Stock',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.category_outlined),
+            activeIcon: Icon(Icons.category),
+            label: 'Matières',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.precision_manufacturing_outlined),
