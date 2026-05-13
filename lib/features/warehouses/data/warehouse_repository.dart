@@ -37,7 +37,7 @@ class WarehouseRepository {
     final response = await client.from(_table).insert(insertMap).select().single();
 
     await SupabaseService.logAudit(
-      action: 'INSERT',
+      action: 'create',
       tableName: _table,
       recordId: response['id'],
       newData: insertMap,
@@ -67,7 +67,7 @@ class WarehouseRepository {
     await client.from(_table).update(updateMap).eq('id', id);
 
     await SupabaseService.logAudit(
-      action: 'UPDATE',
+      action: 'update',
       tableName: _table,
       recordId: id,
       oldData: old,
@@ -87,9 +87,8 @@ class WarehouseRepository {
         .update({'is_active': isActive, 'updated_at': DateTime.now().toIso8601String()})
         .eq('id', id);
 
-    final action = isActive ? 'ACTIVATE' : 'DEACTIVATE';
     await SupabaseService.logAudit(
-      action: action,
+      action: isActive ? 'update' : 'delete',
       tableName: _table,
       recordId: id,
       newData: {'is_active': isActive},

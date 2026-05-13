@@ -7,8 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../data/warehouse_model.dart';
 import '../data/warehouse_repository.dart';
 import '../providers/warehouse_provider.dart';
-import 'warehouse_form_screen.dart';
-import 'warehouse_detail_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class WarehouseListScreen extends ConsumerStatefulWidget {
   const WarehouseListScreen({super.key});
@@ -103,25 +102,16 @@ class _WarehouseListScreenState extends ConsumerState<WarehouseListScreen> {
   }
 
   void _onAdd() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const WarehouseFormScreen()),
-    ).then((_) => _loadWarehouses());
+    context.push('/warehouses/new').then((_) => _loadWarehouses());
   }
 
   void _onEdit(Warehouse warehouse) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => WarehouseFormScreen(warehouse: warehouse),
-      ),
-    ).then((_) => _loadWarehouses());
+    context.push('/warehouses/new', extra: warehouse)
+        .then((_) => _loadWarehouses());
   }
 
   void _onViewDetail(Warehouse warehouse) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => WarehouseDetailScreen(warehouseId: warehouse.id),
-      ),
-    );
+    context.push('/warehouses/${warehouse.id}');
   }
 
   @override
@@ -561,15 +551,15 @@ class _WarehouseListScreenState extends ConsumerState<WarehouseListScreen> {
   }
 
   Widget _buildShimmerList(bool isDark, bool isDesktop) {
-    return Shimmer.fromColors(
-      baseColor: isDark ? const Color(0xFF21262D) : const Color(0xFFE1E4E8),
-      highlightColor:
-          isDark ? const Color(0xFF30363D) : const Color(0xFFF6F8FA),
-      child: SliverPadding(
-        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 16),
-        sliver: SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) => Container(
+    return SliverToBoxAdapter(
+      child: Shimmer.fromColors(
+        baseColor: isDark ? const Color(0xFF21262D) : const Color(0xFFE1E4E8),
+        highlightColor:
+            isDark ? const Color(0xFF30363D) : const Color(0xFFF6F8FA),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 16),
+          child: Column(
+            children: List.generate(5, (_) => Container(
               margin: const EdgeInsets.only(bottom: 8),
               height: 56,
               decoration: BoxDecoration(
@@ -578,8 +568,7 @@ class _WarehouseListScreenState extends ConsumerState<WarehouseListScreen> {
                     : AppColors.lightSurface,
                 borderRadius: BorderRadius.circular(8),
               ),
-            ),
-            childCount: 5,
+            )),
           ),
         ),
       ),

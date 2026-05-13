@@ -8,8 +8,10 @@ import '../../features/dashboard/screens/owner_dashboard.dart';
 import '../../features/warehouses/screens/warehouse_list_screen.dart';
 import '../../features/warehouses/screens/warehouse_form_screen.dart';
 import '../../features/warehouses/screens/warehouse_detail_screen.dart';
+import '../../features/warehouses/data/warehouse_model.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
+    ref.keepAlive();
   return GoRouter(
     initialLocation: '/',
     routes: [
@@ -39,7 +41,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/warehouses/new',
             name: 'warehouse-new',
-            builder: (context, state) => const WarehouseFormScreen(),
+            builder: (context, state) =>
+                WarehouseFormScreen(warehouse: state.extra as Warehouse?),
           ),
           GoRoute(
             path: '/warehouses/:id',

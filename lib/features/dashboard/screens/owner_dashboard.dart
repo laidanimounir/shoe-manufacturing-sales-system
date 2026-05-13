@@ -36,7 +36,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   @override
   void initState() {
     super.initState();
-    _loadDashboardData();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadDashboardData());
   }
 
   Future<void> _loadDashboardData() async {
@@ -138,7 +138,8 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           .toList();
       _lowStockAlerts = _lowStockItems.length;
     } catch (e) {
-      if (mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -152,7 +153,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             ),
           ),
         );
-      }
+      });
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

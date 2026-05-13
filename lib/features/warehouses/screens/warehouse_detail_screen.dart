@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../data/warehouse_model.dart';
 import '../data/warehouse_repository.dart';
-import 'warehouse_form_screen.dart';
 
 class WarehouseDetailScreen extends ConsumerStatefulWidget {
   final String warehouseId;
@@ -79,11 +79,7 @@ class _WarehouseDetailScreenState
 
   void _onEdit() {
     if (_warehouse == null) return;
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => WarehouseFormScreen(warehouse: _warehouse),
-      ),
-    ).then((_) => _loadAll());
+    context.push('/warehouses/new', extra: _warehouse).then((_) => _loadAll());
   }
 
   @override

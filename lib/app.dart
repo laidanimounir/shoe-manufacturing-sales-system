@@ -3,8 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routing/app_router.dart';
 
-class ShoeTrakApp extends ConsumerWidget {
+class ShoeTrakApp extends StatelessWidget {
   const ShoeTrakApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ProviderScope(
+      child: _ShoeTrakAppInner(),
+    );
+  }
+}
+
+class _ShoeTrakAppInner extends ConsumerWidget {
+  const _ShoeTrakAppInner();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

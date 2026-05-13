@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../data/warehouse_model.dart';
 import '../data/warehouse_repository.dart';
+import 'package:go_router/go_router.dart';
 
 class WarehouseFormScreen extends StatefulWidget {
   final Warehouse? warehouse;
@@ -75,7 +76,7 @@ class _WarehouseFormScreenState extends State<WarehouseFormScreen> {
             behavior: SnackBarBehavior.floating,
           ),
         );
-        Navigator.of(context).pop(true);
+        context.pop();
       }
     } catch (e) {
       if (mounted) {
