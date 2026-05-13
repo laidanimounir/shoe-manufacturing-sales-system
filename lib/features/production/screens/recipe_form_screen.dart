@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/supabase_service.dart';
 import '../data/recipe_model.dart';
-import '../data/recipe_item_model.dart';
 import '../data/recipe_repository.dart';
 
 class RecipeFormScreen extends StatefulWidget {
@@ -44,7 +43,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       final client = SupabaseService.client;
       final results = await Future.wait([
         client.from('products').select('id, name').eq('is_active', true).order('name'),
-        client.from('raw_materials').select('id, name, unit').eq('is_active', true).order('name'),
+        client.from('raw_materials').select('id, name, unit').order('name'),
       ]);
 
       if (mounted) {
@@ -57,7 +56,9 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
           _loadItems();
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('recipe_form_screen _loadData error: $e');
+    }
   }
 
   Future<void> _loadItems() async {

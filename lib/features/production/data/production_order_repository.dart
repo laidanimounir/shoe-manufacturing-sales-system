@@ -79,7 +79,6 @@ class ProductionOrderRepository {
     final client = SupabaseService.client;
 
     final old = await client.from(_table).select().eq('id', id).single();
-    final name = old['product_id'] as String? ?? '';
 
     await client
         .from(_table)
@@ -145,11 +144,13 @@ class ProductionOrderRepository {
     String? notes,
   }) async {
     final client = SupabaseService.client;
+    final whId = warehouseId ?? '';
+    final pId = productId ?? '';
 
     await client.from(_entriesTable).insert({
       'order_id': orderId,
-      'warehouse_id': warehouseId,
-      'product_id': productId,
+      'warehouse_id': whId,
+      'product_id': pId,
       'quantity': quantity,
       'unit_cost': unitCost,
       if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
@@ -167,8 +168,8 @@ class ProductionOrderRepository {
     final existing = await client
         .from(_inventoryTable)
         .select('id, quantity')
-        .eq('warehouse_id', warehouseId)
-        .eq('product_id', productId)
+        .eq('warehouse_id', whId)
+        .eq('product_id', pId)
         .maybeSingle();
 
     if (existing != null) {

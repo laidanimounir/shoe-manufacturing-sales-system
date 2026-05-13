@@ -14,6 +14,8 @@ class AppColors {
   static const Color darkTextPrimary = Color(0xFFE6EDF3);
   static const Color darkTextSecondary = Color(0xFF8B949E);
   static const Color darkTextMuted = Color(0xFF484F58);
+  static const Color darkInfo = Color(0xFF58A6FF);
+  static const Color darkMuted = Color(0xFF484F58);
 
   // ─── Light Theme ───
   static const Color lightBackground = Color(0xFFFFFFFF);
@@ -26,4 +28,6 @@ class AppColors {
   static const Color lightTextPrimary = Color(0xFF1F2328);
   static const Color lightTextSecondary = Color(0xFF656D76);
   static const Color lightTextMuted = Color(0xFF818B98);
+  static const Color lightInfo = Color(0xFF0969DA);
+  static const Color lightMuted = Color(0xFF818B98);
 }

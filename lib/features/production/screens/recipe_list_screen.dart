@@ -7,7 +7,6 @@ import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../data/recipe_model.dart';
 import '../data/recipe_repository.dart';
-import '../providers/recipe_provider.dart';
 
 class RecipeListScreen extends ConsumerStatefulWidget {
   const RecipeListScreen({super.key});
@@ -258,8 +257,11 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                           )),
                         ],
                         onSelected: (value) {
-                          if (value == 'edit') _onEdit(r);
-                          else if (value == 'delete') _confirmDelete(r);
+                          if (value == 'edit') {
+                            _onEdit(r);
+                          } else if (value == 'delete') {
+                            _confirmDelete(r);
+                          }
                         },
                       ),
                     ],

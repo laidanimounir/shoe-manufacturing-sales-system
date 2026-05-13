@@ -9,7 +9,6 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/date_utils.dart';
 import '../data/production_order_model.dart';
 import '../data/production_order_repository.dart';
-import '../providers/production_order_provider.dart';
 
 class ProductionOrderListScreen extends ConsumerStatefulWidget {
   const ProductionOrderListScreen({super.key});

@@ -5,12 +5,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
-import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_utils.dart';
 import '../data/production_order_model.dart';
 import '../data/production_order_repository.dart';
-import '../providers/production_order_provider.dart';
 
 class ProductionOrderDetailScreen extends ConsumerStatefulWidget {
   final String orderId;

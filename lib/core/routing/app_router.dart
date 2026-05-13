@@ -190,6 +190,8 @@ class _DesktopShellState extends State<_DesktopShell> {
     if (location.startsWith('/warehouses')) return 1;
     if (location.startsWith('/products')) return 2;
     if (location.startsWith('/raw-materials')) return 3;
+    if (location.startsWith('/production')) return 4;
+    if (location.startsWith('/recipes')) return 5;
     return 0;
   }
 
@@ -218,6 +220,11 @@ class _DesktopShellState extends State<_DesktopShell> {
       icon: Icon(Icons.precision_manufacturing_outlined),
       selectedIcon: Icon(Icons.precision_manufacturing),
       label: Text('Production'),
+    ),
+    NavigationRailDestination(
+      icon: Icon(Icons.menu_book_outlined),
+      selectedIcon: Icon(Icons.menu_book),
+      label: Text('Recettes'),
     ),
     NavigationRailDestination(
       icon: Icon(Icons.local_shipping_outlined),
@@ -254,6 +261,12 @@ class _DesktopShellState extends State<_DesktopShell> {
         break;
       case 3:
         context.go('/raw-materials');
+        break;
+      case 4:
+        context.go('/production');
+        break;
+      case 5:
+        context.go('/recipes');
         break;
     }
   }
@@ -361,7 +374,49 @@ class _MobileShell extends StatelessWidget {
     if (location.startsWith('/products')) return 1;
     if (location.startsWith('/raw-materials')) return 2;
     if (location.startsWith('/production')) return 3;
+    if (location.startsWith('/recipes')) return 4;
     return 0;
+  }
+
+  void _showMoreSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.menu_book_outlined),
+              title: const Text('Recettes'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                context.go('/recipes');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.local_shipping_outlined),
+              title: const Text('Fournisseurs'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Bientôt disponible'), behavior: SnackBarBehavior.floating),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.point_of_sale_outlined),
+              title: const Text('Ventes'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Bientôt disponible'), behavior: SnackBarBehavior.floating),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -380,6 +435,12 @@ class _MobileShell extends StatelessWidget {
               break;
             case 2:
               context.go('/raw-materials');
+              break;
+            case 3:
+              context.go('/production');
+              break;
+            case 4:
+              _showMoreSheet(context);
               break;
           }
         },
