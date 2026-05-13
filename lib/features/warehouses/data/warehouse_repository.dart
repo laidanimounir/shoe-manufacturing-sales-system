@@ -6,13 +6,17 @@ class WarehouseRepository {
 
   static Future<List<Warehouse>> getAll({String? search}) async {
     final client = SupabaseService.client;
-    var query = client.from(_table).select().order('name');
 
     if (search != null && search.isNotEmpty) {
-      query = query.filter('name', 'ilike', '%$search%');
+      final data = await client
+          .from(_table)
+          .select()
+          .ilike('name', '%$search%')
+          .order('name');
+      return (data as List).map((json) => Warehouse.fromMap(json)).toList();
     }
 
-    final data = await query;
+    final data = await client.from(_table).select().order('name');
     return (data as List).map((json) => Warehouse.fromMap(json)).toList();
   }
 

@@ -28,7 +28,7 @@ class _WarehouseDetailScreenState
   @override
   void initState() {
     super.initState();
-    _loadAll();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadAll());
   }
 
   Future<void> _loadAll() async {
@@ -59,20 +59,22 @@ class _WarehouseDetailScreenState
   }
 
   void _showError(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.error_outline,
-                color: Theme.of(context).colorScheme.error, size: 18),
-            const SizedBox(width: 8),
-            Expanded(child: Text(message)),
-          ],
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline,
+                  color: Theme.of(context).colorScheme.error, size: 18),
+              const SizedBox(width: 8),
+              Expanded(child: Text(message)),
+            ],
+          ),
+          behavior: SnackBarBehavior.floating,
         ),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+      );
+    });
   }
 
   void _onEdit() {
