@@ -9,7 +9,7 @@ class RawMaterialRepository {
     String? search,
   }) async {
     final client = SupabaseService.client;
-    var query = client.from(_table).select('*, warehouses(name)').order('name');
+    var query = client.from(_table).select('*, warehouses(name)');
 
     if (warehouseId != null && warehouseId.isNotEmpty) {
       query = query.eq('warehouse_id', warehouseId);
@@ -18,7 +18,7 @@ class RawMaterialRepository {
       query = query.ilike('name', '%$search%');
     }
 
-    final data = await query;
+    final data = await query.order('name');
     return (data as List).map((json) => RawMaterial.fromMap(json)).toList();
   }
 
@@ -125,9 +125,9 @@ class RawMaterialRepository {
     final data = await client
         .from(_table)
         .select('*, warehouses(name)')
-        .filter('quantity', 'lte', 'min_quantity')
         .order('quantity');
 
-    return (data as List).map((json) => RawMaterial.fromMap(json)).toList();
+    final all = (data as List).map((json) => RawMaterial.fromMap(json)).toList();
+    return all.where((m) => m.quantity <= m.minQuantity).toList();
   }
 }

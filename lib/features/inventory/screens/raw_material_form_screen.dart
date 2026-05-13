@@ -193,7 +193,7 @@ class _RawMaterialFormScreenState extends State<RawMaterialFormScreen> {
                         ),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<String>(
-                          value: _selectedUnit,
+                          initialValue: _selectedUnit,
                           decoration: const InputDecoration(
                             labelText: 'Unité *',
                             prefixIcon: Icon(Icons.square_foot, size: 20),
@@ -204,7 +204,7 @@ class _RawMaterialFormScreenState extends State<RawMaterialFormScreen> {
                         ),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<String>(
-                          value: _selectedWarehouseId,
+                          initialValue: _selectedWarehouseId,
                           decoration: const InputDecoration(
                             labelText: 'Dépôt *',
                             prefixIcon: Icon(Icons.warehouse, size: 20),

@@ -44,8 +44,8 @@ class _RawMaterialListScreenState extends ConsumerState<RawMaterialListScreen> {
       ]);
       if (mounted) {
         setState(() {
-          _materials = results[0] as List<RawMaterial>;
-          _lowStockItems = results[1] as List<RawMaterial>;
+          _materials = results[0];
+          _lowStockItems = results[1];
           _isLoading = false;
         });
       }
@@ -88,14 +88,6 @@ class _RawMaterialListScreenState extends ConsumerState<RawMaterialListScreen> {
 
   void _onEdit(RawMaterial m) {
     context.push('/raw-materials/new', extra: m).then((_) => _loadData());
-  }
-
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'Rupture': return Colors.red;
-      case 'Stock bas': return Colors.orange;
-      default: return Colors.green;
-    }
   }
 
   @override
@@ -363,8 +355,8 @@ class _RawMaterialListScreenState extends ConsumerState<RawMaterialListScreen> {
                           )),
                         ],
                         onSelected: (value) {
-                          if (value == 'edit') _onEdit(m);
-                          else if (value == 'stock') _showStockDialog(m);
+                          if (value == 'edit') { _onEdit(m); }
+                          else if (value == 'stock') { _showStockDialog(m); }
                         },
                       ),
                     ],

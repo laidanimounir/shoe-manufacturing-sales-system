@@ -34,16 +34,16 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     setState(() => _isLoading = true);
     try {
       final client = SupabaseService.client;
-      final results = await Future.wait([
-        ProductRepository.getById(widget.productId),
+      final results = await Future.wait<Object>([
+        ProductRepository.getById(widget.productId) as Future<Object>,
         client.from('inventory')
             .select('quantity, warehouse_id, warehouses(name)')
-            .eq('product_id', widget.productId),
+            .eq('product_id', widget.productId) as Future<Object>,
         client.from('invoice_items')
             .select('quantity, unit_price, invoice_id, invoices(invoice_number, invoice_date, client_id, clients(name))')
             .eq('product_id', widget.productId)
             .order('invoice_id', ascending: false)
-            .limit(10),
+            .limit(10) as Future<Object>,
       ]);
 
       if (mounted) {

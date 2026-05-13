@@ -430,8 +430,8 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                             )),
                           ],
                           onSelected: (value) {
-                            if (value == 'edit') _onEdit(p);
-                            else if (value == 'toggle') _toggleActive(p);
+                            if (value == 'edit') { _onEdit(p); }
+                            else if (value == 'toggle') { _toggleActive(p); }
                           },
                         ),
                       ],

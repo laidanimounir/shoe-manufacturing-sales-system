@@ -10,7 +10,7 @@ class ProductRepository {
     bool? isActive,
   }) async {
     final client = SupabaseService.client;
-    var query = client.from(_table).select().order('name');
+    var query = client.from(_table).select();
 
     if (search != null && search.isNotEmpty) {
       query = query.ilike('name', '%$search%');
@@ -22,7 +22,7 @@ class ProductRepository {
       query = query.eq('is_active', isActive);
     }
 
-    final data = await query;
+    final data = await query.order('name');
     return (data as List).map((json) => Product.fromMap(json)).toList();
   }
 
