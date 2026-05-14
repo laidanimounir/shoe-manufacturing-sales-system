@@ -98,6 +98,82 @@ class ProductionOrderRepository {
     );
   }
 
+  static Future<double> calculateAndSaveCost(String orderId) async {
+    final client = SupabaseService.client;
+
+    final order = await client
+        .from(_table)
+        .select('product_id, recipe_id, warehouse_id')
+        .eq('id', orderId)
+        .single();
+
+    final recipeId = order['recipe_id'] as String?;
+    if (recipeId == null) return 0;
+
+    final logSum = await client
+        .from(_logsTable)
+        .select('quantity')
+        .eq('order_id', orderId);
+    int totalProduced = 0;
+    for (final log in logSum as List) {
+      totalProduced += (log['quantity'] as num?)?.toInt() ?? 0;
+    }
+    if (totalProduced <= 0) totalProduced = 1;
+
+    final items = await client
+        .from('recipe_items')
+        .select('quantity_per_unit, raw_materials!inner(unit_cost, name, unit)')
+        .eq('recipe_id', recipeId);
+
+    double materialCostPerUnit = 0;
+    final breakdown = <Map<String, dynamic>>[];
+
+    for (final item in items as List) {
+      final rm = item['raw_materials'] as Map;
+      final qtyPerUnit = (item['quantity_per_unit'] as num?)?.toDouble() ?? 0;
+      final rmCost = (rm['unit_cost'] as num?)?.toDouble() ?? 0;
+      final lineCost = qtyPerUnit * rmCost;
+      materialCostPerUnit += lineCost;
+      breakdown.add({
+        'name': rm['name'] as String? ?? '',
+        'qty_per_unit': qtyPerUnit,
+        'unit': rm['unit'] as String? ?? '',
+        'unit_cost': rmCost,
+        'line_cost': lineCost,
+      });
+    }
+
+    final totalMaterialCost = materialCostPerUnit * totalProduced;
+
+    final existing = await client
+        .from(_costTable)
+        .select('id')
+        .eq('order_id', orderId)
+        .maybeSingle();
+
+    if (existing != null) {
+      await client.from(_costTable).update({
+        'total_pairs_produced': totalProduced,
+        'total_labor_cost': 0,
+        'total_material_cost': totalMaterialCost,
+        'unit_cost': materialCostPerUnit,
+        'summary_date': DateTime.now().toIso8601String().split('T').first,
+      }).eq('id', existing['id']);
+    } else {
+      await client.from(_costTable).insert({
+        'order_id': orderId,
+        'warehouse_id': order['warehouse_id'],
+        'summary_date': DateTime.now().toIso8601String().split('T').first,
+        'total_pairs_produced': totalProduced,
+        'total_labor_cost': 0,
+        'total_material_cost': totalMaterialCost,
+        'unit_cost': materialCostPerUnit,
+      });
+    }
+
+    return materialCostPerUnit;
+  }
+
   static Future<void> addWorkerLog({
     required String orderId,
     required String? workerId,
@@ -133,6 +209,8 @@ class ProductionOrderRepository {
           'updated_at': DateTime.now().toIso8601String(),
         })
         .eq('id', orderId);
+
+    await calculateAndSaveCost(orderId);
   }
 
   static Future<void> enterStock({
