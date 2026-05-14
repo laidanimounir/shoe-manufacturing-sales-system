@@ -33,6 +33,15 @@ import '../../features/suppliers/screens/purchase_order_detail_screen.dart';
 import '../../features/suppliers/screens/supplier_payment_screen.dart';
 import '../../features/suppliers/data/supplier_model.dart';
 import '../../features/suppliers/data/purchase_order_model.dart';
+import '../../features/sales/screens/client_list_screen.dart';
+import '../../features/sales/screens/client_form_screen.dart';
+import '../../features/sales/screens/client_detail_screen.dart';
+import '../../features/sales/screens/pos_screen.dart';
+import '../../features/sales/screens/invoice_list_screen.dart';
+import '../../features/sales/screens/invoice_detail_screen.dart';
+import '../../features/sales/screens/payment_screen.dart';
+import '../../features/sales/data/client_model.dart';
+import '../../features/sales/data/invoice_model.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
     ref.keepAlive();
@@ -196,6 +205,51 @@ final routerProvider = Provider<GoRouter>((ref) {
               return SupplierPaymentScreen(order: order);
             },
           ),
+          GoRoute(
+            path: '/clients',
+            name: 'clients',
+            builder: (context, state) => const ClientListScreen(),
+          ),
+          GoRoute(
+            path: '/clients/new',
+            name: 'client-new',
+            builder: (context, state) =>
+                ClientFormScreen(client: state.extra as Client?),
+          ),
+          GoRoute(
+            path: '/clients/:id',
+            name: 'client-detail',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return ClientDetailScreen(clientId: id);
+            },
+          ),
+          GoRoute(
+            path: '/sales',
+            name: 'sales',
+            builder: (context, state) => const InvoiceListScreen(),
+          ),
+          GoRoute(
+            path: '/sales/new',
+            name: 'sale-new',
+            builder: (context, state) => const PosScreen(),
+          ),
+          GoRoute(
+            path: '/sales/:id',
+            name: 'sale-detail',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return InvoiceDetailScreen(invoiceId: id);
+            },
+          ),
+          GoRoute(
+            path: '/sales/:id/payment',
+            name: 'sale-payment',
+            builder: (context, state) {
+              final inv = state.extra as Invoice;
+              return PaymentScreen(invoice: inv);
+            },
+          ),
         ],
       ),
     ],
@@ -248,6 +302,8 @@ class _DesktopShellState extends State<_DesktopShell> {
     if (location.startsWith('/recipes')) return 5;
     if (location.startsWith('/suppliers')) return 6;
     if (location.startsWith('/purchases')) return 7;
+    if (location.startsWith('/sales')) return 8;
+    if (location.startsWith('/clients')) return 9;
     return 0;
   }
 
@@ -300,6 +356,11 @@ class _DesktopShellState extends State<_DesktopShell> {
     NavigationRailDestination(
       icon: Icon(Icons.people_outline),
       selectedIcon: Icon(Icons.people),
+      label: Text('Clients'),
+    ),
+    NavigationRailDestination(
+      icon: Icon(Icons.badge_outlined),
+      selectedIcon: Icon(Icons.badge),
       label: Text('Employés'),
     ),
     NavigationRailDestination(
@@ -334,6 +395,12 @@ class _DesktopShellState extends State<_DesktopShell> {
         break;
       case 7:
         context.go('/purchases');
+        break;
+      case 8:
+        context.go('/sales');
+        break;
+      case 9:
+        context.go('/clients');
         break;
     }
   }
@@ -481,9 +548,15 @@ class _MobileShell extends StatelessWidget {
               title: const Text('Ventes'),
               onTap: () {
                 Navigator.of(ctx).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Bientôt disponible'), behavior: SnackBarBehavior.floating),
-                );
+                context.go('/sales');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.people_outline),
+              title: const Text('Clients'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                context.go('/clients');
               },
             ),
           ],

@@ -38,8 +38,7 @@ class ProductSearchService {
       productQuery = productQuery.or('name.ilike.%$query%,sku.ilike.%$query%');
     }
 
-    productQuery = productQuery.order('name');
-    final products = await productQuery;
+    final products = await productQuery.order('name');
     final results = <SaleProduct>[];
 
     for (final p in products as List) {

@@ -156,7 +156,7 @@ class _ClientListScreenState extends ConsumerState<ClientListScreen> {
   );
 
   Widget _buildTypeFilter(ThemeData theme) => SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(
-    children: const [
+    children: [
       {'key': 'all', 'label': 'Tous'},
       {'key': 'wholesale', 'label': 'Grossiste'},
       {'key': 'retail', 'label': 'Détaillant'},
@@ -212,7 +212,7 @@ class _ClientListScreenState extends ConsumerState<ClientListScreen> {
               const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit_outlined, size: 18), SizedBox(width: 8), Text('Modifier')])),
               const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete_outline, size: 18, color: Colors.red), SizedBox(width: 8), Text('Supprimer', style: TextStyle(color: Colors.red))])),
             ],
-            onSelected: (v) { if (v == 'detail') _onDetail(c); else if (v == 'edit') _onEdit(c); else if (v == 'delete') _confirmDelete(c); },
+            onSelected: (v) { if (v == 'detail') { _onDetail(c); } else if (v == 'edit') { _onEdit(c); } else if (v == 'delete') { _confirmDelete(c); } },
           ),
         ]))),
       );
@@ -229,5 +229,27 @@ class _ClientListScreenState extends ConsumerState<ClientListScreen> {
     OutlinedButton.icon(onPressed: _onAdd, icon: const Icon(Icons.add, size: 18), label: const Text('Nouveau client')),
   ]))));
 
-  Widget _buildShimmerList(bool isDark, bool isDesktop) => SliverToBoxAdapter(child: Shimmer.fromColors(baseColor: isDark ? const Color(0xFF21262D) : const Color(0xFFE1E4E8), highlightColor: isDark ? const Color(0xFF30363D) : const Color(0xFFF6F8FA), child: Padding(padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 16), child: Column(children: List.generate(5, (_) => Container(margin: const EdgeInsets.only(bottom: 8), height: 56, decoration: BoxDecoration(color: isDark ? AppColors.darkSurface : AppColors.lightSurface, borderRadius: BorderRadius.circular(8)))))))));
+  Widget _buildShimmerList(bool isDark, bool isDesktop) {
+    final baseColor = isDark ? const Color(0xFF21262D) : const Color(0xFFE1E4E8);
+    final highlightColor = isDark ? const Color(0xFF30363D) : const Color(0xFFF6F8FA);
+    return SliverToBoxAdapter(
+      child: Shimmer.fromColors(
+        baseColor: baseColor,
+        highlightColor: highlightColor,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 16),
+          child: Column(
+            children: List.generate(5, (i) => Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              height: 56,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            )),
+          ),
+        ),
+      ),
+    );
+  }
 }

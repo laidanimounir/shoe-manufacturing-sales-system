@@ -6,11 +6,8 @@ import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/currency_formatter.dart';
-import '../../../core/utils/date_utils.dart';
 import '../data/invoice_model.dart';
 import '../data/invoice_repository.dart';
-import '../data/invoice_item_model.dart';
-import '../providers/invoice_provider.dart';
 
 class InvoiceListScreen extends ConsumerStatefulWidget {
   const InvoiceListScreen({super.key});

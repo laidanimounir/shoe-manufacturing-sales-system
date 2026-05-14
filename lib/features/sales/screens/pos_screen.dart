@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/supabase_service.dart';
@@ -323,7 +322,7 @@ class _PosScreenState extends State<PosScreen> {
       Expanded(child: _cart.isEmpty ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.shopping_cart_outlined, size: 48, color: theme.textTheme.bodySmall?.color), const SizedBox(height: 8), Text('Panier vide', style: theme.textTheme.bodySmall)])) : ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: _cart.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        separatorBuilder: (_, index) => const SizedBox(height: 8),
         itemBuilder: (ctx, i) => _buildCartItem(i, theme, isDark),
       )),
       Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(border: Border(top: BorderSide(color: theme.colorScheme.outline))), child: Column(children: [
@@ -347,7 +346,7 @@ class _PosScreenState extends State<PosScreen> {
         if (_remainingDebt > 0) Padding(padding: const EdgeInsets.only(top: 4), child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [Text('Reste dû: ${CurrencyFormatter.format(_remainingDebt)}', style: TextStyle(color: isDark ? AppColors.darkError : AppColors.lightError, fontWeight: FontWeight.w600))])),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
-          value: _selectedClientId,
+          initialValue: _selectedClientId,
           decoration: const InputDecoration(labelText: 'Client', prefixIcon: Icon(Icons.person, size: 20), border: OutlineInputBorder()),
           items: [
             const DropdownMenuItem<String>(value: null, child: Text('Vente au comptoir')),
