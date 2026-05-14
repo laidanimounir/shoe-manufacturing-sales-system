@@ -42,6 +42,14 @@ import '../../features/sales/screens/invoice_detail_screen.dart';
 import '../../features/sales/screens/payment_screen.dart';
 import '../../features/sales/data/client_model.dart';
 import '../../features/sales/data/invoice_model.dart';
+import '../../features/employees/screens/employee_list_screen.dart';
+import '../../features/employees/screens/employee_form_screen.dart';
+import '../../features/employees/screens/employee_detail_screen.dart';
+import '../../features/employees/screens/attendance_screen.dart';
+import '../../features/employees/screens/salary_list_screen.dart';
+import '../../features/employees/screens/salary_detail_screen.dart';
+import '../../features/production/screens/production_cost_screen.dart';
+import '../../features/employees/data/employee_model.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
     ref.keepAlive();
@@ -150,6 +158,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             },
           ),
           GoRoute(
+            path: '/production/:id/costs',
+            name: 'production-costs',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return ProductionCostScreen(orderId: id);
+            },
+          ),
+          GoRoute(
             path: '/recipes',
             name: 'recipes',
             builder: (context, state) => const RecipeListScreen(),
@@ -250,6 +266,43 @@ final routerProvider = Provider<GoRouter>((ref) {
               return PaymentScreen(invoice: inv);
             },
           ),
+          GoRoute(
+            path: '/employees',
+            name: 'employees',
+            builder: (context, state) => const EmployeeListScreen(),
+          ),
+          GoRoute(
+            path: '/employees/new',
+            name: 'employee-new',
+            builder: (context, state) =>
+                EmployeeFormScreen(employee: state.extra as Employee?),
+          ),
+          GoRoute(
+            path: '/employees/:id',
+            name: 'employee-detail',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return EmployeeDetailScreen(employeeId: id);
+            },
+          ),
+          GoRoute(
+            path: '/attendance',
+            name: 'attendance',
+            builder: (context, state) => const AttendanceScreen(),
+          ),
+          GoRoute(
+            path: '/salaries',
+            name: 'salaries',
+            builder: (context, state) => const SalaryListScreen(),
+          ),
+          GoRoute(
+            path: '/salaries/:id',
+            name: 'salary-detail',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return SalaryDetailScreen(sheetId: id);
+            },
+          ),
         ],
       ),
     ],
@@ -304,6 +357,9 @@ class _DesktopShellState extends State<_DesktopShell> {
     if (location.startsWith('/purchases')) return 7;
     if (location.startsWith('/sales')) return 8;
     if (location.startsWith('/clients')) return 9;
+    if (location.startsWith('/employees')) return 10;
+    if (location.startsWith('/attendance')) return 11;
+    if (location.startsWith('/salaries')) return 12;
     return 0;
   }
 
@@ -364,6 +420,16 @@ class _DesktopShellState extends State<_DesktopShell> {
       label: Text('Employés'),
     ),
     NavigationRailDestination(
+      icon: Icon(Icons.fact_check_outlined),
+      selectedIcon: Icon(Icons.fact_check),
+      label: Text('Pointage'),
+    ),
+    NavigationRailDestination(
+      icon: Icon(Icons.payments_outlined),
+      selectedIcon: Icon(Icons.payments),
+      label: Text('Salaires'),
+    ),
+    NavigationRailDestination(
       icon: Icon(Icons.account_balance_outlined),
       selectedIcon: Icon(Icons.account_balance),
       label: Text('Finance'),
@@ -402,6 +468,15 @@ class _DesktopShellState extends State<_DesktopShell> {
       case 9:
         context.go('/clients');
         break;
+      case 10:
+        context.go('/employees');
+        break;
+      case 11:
+        context.go('/attendance');
+        break;
+      case 12:
+        context.go('/salaries');
+        break;
     }
   }
 
@@ -419,63 +494,75 @@ class _DesktopShellState extends State<_DesktopShell> {
                 right: BorderSide(color: borderColor),
               ),
             ),
-            child: NavigationRail(
-              extended: !_isCollapsed,
-              minExtendedWidth: 240,
-              minWidth: 64,
-              selectedIndex: _selectedIndex(context),
-              onDestinationSelected: _onDestinationSelected,
-              leading: Padding(
-                padding: EdgeInsets.symmetric(
-                  vertical: 16,
-                  horizontal: _isCollapsed ? 8 : 16,
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
+            child: SizedBox(
+              width: _isCollapsed ? 64 : 240,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: _isCollapsed ? 8 : 16,
+                    ),
+                    child: Column(
                       children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Icon(
-                            Icons.storefront,
-                            size: 18,
-                            color: theme.colorScheme.onPrimary,
-                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Icon(
+                                Icons.storefront,
+                                size: 18,
+                                color: theme.colorScheme.onPrimary,
+                              ),
+                            ),
+                            if (!_isCollapsed) ...[
+                              const SizedBox(width: 10),
+                              Text(
+                                'ShoeTrak',
+                                style: theme.textTheme.titleLarge,
+                              ),
+                            ],
+                          ],
                         ),
-                        if (!_isCollapsed) ...[
-                          const SizedBox(width: 10),
-                          Text(
-                            'ShoeTrak',
-                            style: theme.textTheme.titleLarge,
+                        const SizedBox(height: 8),
+                        IconButton(
+                          icon: Icon(
+                            _isCollapsed
+                                ? Icons.chevron_right
+                                : Icons.chevron_left,
+                            size: 20,
                           ),
-                        ],
+                          onPressed: () {
+                            setState(() => _isCollapsed = !_isCollapsed);
+                          },
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    IconButton(
-                      icon: Icon(
-                        _isCollapsed
-                            ? Icons.chevron_right
-                            : Icons.chevron_left,
-                        size: 20,
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: List.generate(_destinations.length, (i) {
+                          final selected = _selectedIndex(context) == i;
+                          final d = _destinations[i];
+                          return _NavItem(
+                            icon: selected ? d.selectedIcon! : d.icon,
+                            label: d.label,
+                            selected: selected,
+                            isCollapsed: _isCollapsed,
+                            onTap: () => _onDestinationSelected(i),
+                          );
+                        }),
                       ),
-                      onPressed: () {
-                        setState(() => _isCollapsed = !_isCollapsed);
-                      },
                     ),
-                  ],
-                ),
-              ),
-              trailing: Expanded(
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
+                  ),
+                  Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: IconButton(
                       icon: const Icon(Icons.logout, size: 20),
@@ -486,9 +573,8 @@ class _DesktopShellState extends State<_DesktopShell> {
                       },
                     ),
                   ),
-                ),
+                ],
               ),
-              destinations: _destinations,
             ),
           ),
           Expanded(child: widget.child),
@@ -616,6 +702,59 @@ class _MobileShell extends StatelessWidget {
             label: 'Plus',
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  final Widget icon;
+  final Widget label;
+  final bool selected;
+  final bool isCollapsed;
+  final VoidCallback onTap;
+
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.isCollapsed,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = selected
+        ? theme.colorScheme.primary
+        : theme.colorScheme.onSurfaceVariant;
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          vertical: 12,
+          horizontal: isCollapsed ? 8 : 16,
+        ),
+        decoration: selected
+            ? BoxDecoration(
+                border: Border(
+                  left: BorderSide(color: theme.colorScheme.primary, width: 3),
+                ),
+              )
+            : null,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconTheme(data: IconThemeData(color: color, size: 20), child: icon),
+            if (!isCollapsed) ...[
+              const SizedBox(width: 12),
+              DefaultTextStyle(
+                style: TextStyle(fontSize: 13, color: color),
+                child: label,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

@@ -254,6 +254,11 @@ class _ProductionOrderDetailScreenState extends ConsumerState<ProductionOrderDet
               icon: const Icon(Icons.inventory, size: 18),
               label: const Text('Entrée en stock'),
             ),
+          FilledButton.tonalIcon(
+            onPressed: () => context.push('/production/${widget.orderId}/costs'),
+            icon: const Icon(Icons.account_balance_wallet, size: 18),
+            label: const Text('Coûts'),
+          ),
         ],
       ),
     );
