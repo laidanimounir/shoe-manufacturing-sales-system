@@ -179,6 +179,61 @@ class PurchaseOrderRepository {
     );
   }
 
+  static Future<List<Map<String, dynamic>>> getReceivePreview(
+      String orderId) async {
+    final client = SupabaseService.client;
+    final items = await client
+        .from(_itemsTable)
+        .select('*, raw_materials(name, quantity, unit_cost), products(name)')
+        .eq('purchase_order_id', orderId)
+        .order('id');
+
+    final previews = <Map<String, dynamic>>[];
+
+    for (final item in items as List) {
+      final itemType = item['item_type'] as String;
+      final qty = (item['quantity'] as num?)?.toDouble() ?? 0;
+      final purchaseCost = (item['unit_cost'] as num?)?.toDouble() ?? 0;
+
+      final preview = <String, dynamic>{
+        'item_type': itemType,
+        'name': itemType == 'raw_material'
+            ? ((item['raw_materials'] as Map?)?['name'] as String? ?? '')
+            : ((item['products'] as Map?)?['name'] as String? ?? ''),
+        'current_qty': 0.0,
+        'purchase_qty': qty,
+        'old_unit_cost': 0.0,
+        'new_unit_cost': 0.0,
+        'raw_material_id': item['raw_material_id'] as String?,
+      };
+
+      if (itemType == 'raw_material') {
+        final rmId = item['raw_material_id'] as String?;
+        if (rmId != null) {
+          final existing = await client
+              .from(_rawMaterialsTable)
+              .select('quantity, unit_cost')
+              .eq('id', rmId)
+              .single();
+          final oldQty = (existing['quantity'] as num?)?.toDouble() ?? 0;
+          final oldCost = (existing['unit_cost'] as num?)?.toDouble() ?? 0;
+          final totalQty = oldQty + qty;
+          final wacc = totalQty > 0
+              ? ((oldQty * oldCost) + (qty * purchaseCost)) / totalQty
+              : purchaseCost;
+
+          preview['current_qty'] = oldQty;
+          preview['old_unit_cost'] = oldCost;
+          preview['new_unit_cost'] = wacc;
+        }
+      }
+
+      previews.add(preview);
+    }
+
+    return previews;
+  }
+
   static Future<void> receive({
     required String orderId,
     String? warehouseId,
@@ -193,20 +248,27 @@ class PurchaseOrderRepository {
     for (final item in items as List) {
       final itemType = item['item_type'] as String;
       final qty = (item['quantity'] as num?)?.toDouble() ?? 0;
+      final purchaseCost = (item['unit_cost'] as num?)?.toDouble() ?? 0;
 
       if (itemType == 'raw_material') {
         final rmId = item['raw_material_id'] as String?;
         if (rmId != null) {
           final existing = await client
               .from(_rawMaterialsTable)
-              .select('id, quantity')
+              .select('id, quantity, unit_cost')
               .eq('id', rmId)
               .single();
-          final currentQty = (existing['quantity'] as num?)?.toDouble() ?? 0;
-          await client
-              .from(_rawMaterialsTable)
-              .update({'quantity': currentQty + qty})
-              .eq('id', rmId);
+          final oldQty = (existing['quantity'] as num?)?.toDouble() ?? 0;
+          final oldCost = (existing['unit_cost'] as num?)?.toDouble() ?? 0;
+          final totalQty = oldQty + qty;
+          final wacc = totalQty > 0
+              ? ((oldQty * oldCost) + (qty * purchaseCost)) / totalQty
+              : purchaseCost;
+
+          await client.from(_rawMaterialsTable).update({
+            'quantity': totalQty,
+            'unit_cost': wacc,
+          }).eq('id', rmId);
         }
       } else if (itemType == 'product' || itemType == 'finished_product') {
         final pId = item['product_id'] as String?;
