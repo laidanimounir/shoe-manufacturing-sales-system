@@ -132,6 +132,35 @@ class ProductRepository {
     );
   }
 
+  static Future<List<Product>> getAllWithStock({
+    String? search,
+    String? category,
+  }) async {
+    final client = SupabaseService.client;
+    var query = client.from('products').select().eq('is_active', true);
+
+    if (search != null && search.isNotEmpty) {
+      query = query.ilike('name', '%$search%');
+    }
+    if (category != null && category.isNotEmpty) {
+      query = query.eq('category', category);
+    }
+
+    final productsData = await query.order('name');
+    final inventoryData = await client.from('inventory').select('product_id, quantity');
+    final stockMap = <String, double>{};
+    for (final row in inventoryData as List) {
+      final pid = row['product_id'] as String;
+      final qty = (row['quantity'] as num?)?.toDouble() ?? 0;
+      stockMap[pid] = (stockMap[pid] ?? 0) + qty;
+    }
+
+    return (productsData as List).map((json) {
+      json['total_stock'] = stockMap[json['id'] as String] ?? 0;
+      return Product.fromMap(json);
+    }).toList();
+  }
+
   static Future<List<String>> getCategories() async {
     final client = SupabaseService.client;
     final data = await client

@@ -78,12 +78,13 @@ class _ProductionStockEntryScreenState extends State<ProductionStockEntryScreen>
 
   Future<void> _loadRecipeBreakdown() async {
     if (_order?.recipeId == null) return;
+    final rId = _order!.recipeId!;
     try {
       final client = SupabaseService.client;
       final items = await client
           .from('recipe_items')
           .select('quantity_per_unit, unit, raw_materials!inner(name, unit_cost)')
-          .eq('recipe_id', _order!.recipeId);
+          .eq('recipe_id', rId);
       if (mounted) {
         setState(() {
           _recipeBreakdown = (items as List).map((item) {

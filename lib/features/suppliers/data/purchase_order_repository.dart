@@ -285,7 +285,7 @@ class PurchaseOrderRepository {
                 (existingInv['quantity'] as num?)?.toInt() ?? 0;
             await client
                 .from(_inventoryTable)
-                .update({'quantity': currentQty + qty.toInt()})
+                .update({'quantity': currentQty + qty.toInt(), 'last_updated': DateTime.now().toIso8601String()})
                 .eq('id', existingInv['id']);
           } else {
             await client.from(_inventoryTable).insert({

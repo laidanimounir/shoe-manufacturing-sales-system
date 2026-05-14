@@ -40,7 +40,7 @@ class _CartItem {
 class _PosScreenState extends State<PosScreen> {
   final _searchController = TextEditingController();
   final _paidController = TextEditingController();
-  List<SaleProduct> _products = [];
+  List<SaleProduct> _allProducts = [];
   final List<_CartItem> _cart = [];
   String _sourceFilter = 'all';
   String? _selectedWarehouseId;
@@ -49,8 +49,14 @@ class _PosScreenState extends State<PosScreen> {
   String _paymentMethod = 'cash';
   List<Map<String, dynamic>> _warehouses = [];
   List<Map<String, dynamic>> _clients = [];
-  bool _isSearching = false;
+  bool _isLoading = false;
   bool _isSaving = false;
+
+  List<SaleProduct> get _products {
+    if (_sourceFilter == 'all') return _allProducts;
+    if (_sourceFilter == 'instock') return _allProducts.where((p) => p.availableQty > 0).toList();
+    return _allProducts.where((p) => p.sourceType == _sourceFilter).toList();
+  }
 
   @override
   void initState() {
@@ -75,36 +81,41 @@ class _PosScreenState extends State<PosScreen> {
       setState(() {
         _warehouses = List<Map<String, dynamic>>.from(results[0] as List);
         _clients = List<Map<String, dynamic>>.from(results[1] as List);
-        if (_warehouses.isNotEmpty) _selectedWarehouseId = _warehouses.first['id'] as String;
+        if (_warehouses.isNotEmpty) {
+          _selectedWarehouseId = _warehouses.first['id'] as String;
+        }
       });
+      _loadProducts();
     }
   }
 
-  Future<void> _search() async {
+  Future<void> _loadProducts() async {
     if (_selectedWarehouseId == null) return;
-    setState(() => _isSearching = true);
+    setState(() => _isLoading = true);
     try {
       final results = await ProductSearchService.searchForSale(
         warehouseId: _selectedWarehouseId!,
-        query: _searchController.text,
+        query: _searchController.text.isNotEmpty ? _searchController.text : null,
       );
       if (mounted) {
         setState(() {
-          _products = _sourceFilter == 'all'
-              ? results
-              : results.where((p) => p.sourceType == _sourceFilter).toList();
-          _isSearching = false;
+          _allProducts = results;
+          _isLoading = false;
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _isSearching = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+      }
     }
   }
 
   void _addToCart(SaleProduct p) {
+    final aq = p.availableQty.toInt();
     final existingIdx = _cart.indexWhere((c) => c.productId == p.id);
     if (existingIdx >= 0) {
-      if (_cart[existingIdx].quantity < p.availableQty) {
+      if (_cart[existingIdx].quantity < aq) {
         setState(() => _cart[existingIdx].quantity++);
       } else {
         if (mounted) {
@@ -121,7 +132,7 @@ class _PosScreenState extends State<PosScreen> {
           unitCost: p.unitCost,
           quantity: 1,
           unitPrice: p.sellingPrice,
-          stockAvailable: p.availableQty,
+          stockAvailable: aq,
         ));
       });
     }
@@ -186,8 +197,17 @@ class _PosScreenState extends State<PosScreen> {
         items: items,
       );
 
+      _clearCart();
+      await _loadProducts();
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vente enregistrée ✓'), behavior: SnackBarBehavior.floating));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Vente enregistrée ✓'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
         _showPrintDialog();
       }
     } catch (e) {
@@ -234,7 +254,7 @@ class _PosScreenState extends State<PosScreen> {
           value: _selectedWarehouseId,
           style: theme.textTheme.bodySmall,
           items: _warehouses.map((w) => DropdownMenuItem(value: w['id'] as String, child: Text(w['name'] as String, style: const TextStyle(fontSize: 12)))).toList(),
-          onChanged: (v) { setState(() { _selectedWarehouseId = v; _products.clear(); }); },
+          onChanged: (v) { setState(() { _selectedWarehouseId = v; _allProducts.clear(); }); _loadProducts(); },
         )),
         const SizedBox(width: 16),
       ]),
@@ -266,27 +286,47 @@ class _PosScreenState extends State<PosScreen> {
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
             style: theme.textTheme.bodyMedium,
-            onSubmitted: (_) => _search(),
+            onChanged: (_) => _loadProducts(),
+            onSubmitted: (_) => _loadProducts(),
           )),
           const SizedBox(width: 8),
-          FilledButton.icon(onPressed: _search, icon: const Icon(Icons.search, size: 18), label: const Text('Chercher')),
+          FilledButton.icon(onPressed: _loadProducts, icon: const Icon(Icons.search, size: 18), label: const Text('Chercher')),
         ]),
         const SizedBox(height: 8),
         _buildSourceFilter(theme),
       ])),
-      Expanded(child: _isSearching ? const Center(child: CircularProgressIndicator()) : _products.isEmpty ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.inventory_2_outlined, size: 48, color: theme.textTheme.bodySmall?.color), const SizedBox(height: 8), Text('Recherchez un produit', style: theme.textTheme.bodySmall)])) : GridView.builder(
-        padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, childAspectRatio: 0.9, crossAxisSpacing: 12, mainAxisSpacing: 12),
-        itemCount: _products.length,
-        itemBuilder: (ctx, i) => _buildProductCard(_products[i], theme, isDark),
-      )),
+      Expanded(
+        child: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _allProducts.isEmpty
+            ? RefreshIndicator(
+                onRefresh: _loadProducts,
+                child: SingleChildScrollView(
+                  physics: AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(height: 200, child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.inventory_2_outlined, size: 48, color: theme.textTheme.bodySmall?.color),
+                    const SizedBox(height: 8),
+                    Text('Aucun produit disponible', style: theme.textTheme.bodySmall),
+                  ]))),
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: _loadProducts,
+                child: GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, childAspectRatio: 0.9, crossAxisSpacing: 12, mainAxisSpacing: 12),
+                  itemCount: _products.length,
+                  itemBuilder: (ctx, i) => _buildProductCard(_products[i], theme, isDark),
+                ),
+              ),
+      ),
     ]);
   }
 
   Widget _buildSourceFilter(ThemeData theme) => SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(
-    children: const [{'k': 'all', 'l': 'Tous'}, {'k': 'manufactured', 'l': 'Fabriqué'}, {'k': 'purchased', 'l': 'Acheté'}].map((e) {
+    children: const [{'k': 'all', 'l': 'Tous'}, {'k': 'instock', 'l': 'En stock'}, {'k': 'manufactured', 'l': 'Fabriqué'}, {'k': 'purchased', 'l': 'Acheté'}].map((e) {
       final sel = _sourceFilter == e['k'];
-      return Padding(padding: const EdgeInsets.only(right: 8), child: FilterChip(label: Text(e['l']!), selected: sel, onSelected: (v) { setState(() => _sourceFilter = e['k']!); _search(); }, selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15), checkmarkColor: theme.colorScheme.primary));
+      return Padding(padding: const EdgeInsets.only(right: 8), child: FilterChip(label: Text(e['l']!), selected: sel, onSelected: (v) { setState(() => _sourceFilter = e['k']!); }, selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15), checkmarkColor: theme.colorScheme.primary));
     }).toList(),
   ));
 
@@ -297,7 +337,7 @@ class _PosScreenState extends State<PosScreen> {
       child: InkWell(borderRadius: BorderRadius.circular(8), onTap: p.availableQty > 0 ? () => _addToCart(p) : null, child: Padding(padding: const EdgeInsets.all(10), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Expanded(child: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis)),
-          Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: stockColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(4)), child: Text('${p.availableQty}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: stockColor))),
+            Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: stockColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(4)), child: Text(p.availableQty > 0 ? "${p.availableQty.toInt()} u" : "Rupture", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: stockColor))),
         ]),
         const SizedBox(height: 4),
         Text('SKU: ${p.sku ?? '-'}', style: theme.textTheme.labelSmall),

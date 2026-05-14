@@ -40,16 +40,18 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
   Future<void> _loadData() async {
     try {
       final results = await Future.wait([
-        ProductRepository.getAll(
+        ProductRepository.getAllWithStock(
           search: _searchText.isNotEmpty ? _searchText : null,
           category: _selectedCategory,
         ),
         ProductRepository.getCategories(),
       ]);
       if (mounted) {
+        final loaded = results[0];
+        final cats = results[1];
         setState(() {
-          _products = results[0] as List<Product>;
-          _categories = results[1] as List<String>;
+          if (loaded is List<Product>) _products = loaded;
+          if (cats is List<String>) _categories = cats;
           _isLoading = false;
         });
       }
@@ -294,6 +296,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                     DataColumn(label: Text('Taille')),
                     DataColumn(label: Text('Couleur')),
                     DataColumn(label: Text('Prix'), numeric: true),
+                    DataColumn(label: Text('Stock'), numeric: true),
                     DataColumn(label: Text('Statut')),
                     DataColumn(label: Text('Actions')),
                   ],
@@ -313,6 +316,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                           CurrencyFormatter.format(p.sellingPrice),
                           style: GoogleFonts.jetBrainsMono(fontSize: 12),
                         )),
+                        DataCell(_buildStockBadge(p.totalStock, isDark)),
                         DataCell(_buildStatusChip(p.isActive, isDark)),
                         DataCell(Row(
                           mainAxisSize: MainAxisSize.min,
@@ -443,6 +447,32 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
           },
           childCount: _products.length,
         ),
+      ),
+    );
+  }
+
+  Widget _buildStockBadge(double stock, bool isDark) {
+    Color color;
+    String label;
+    if (stock <= 0) {
+      color = isDark ? AppColors.darkError : AppColors.lightError;
+      label = 'Rupture';
+    } else if (stock <= 10) {
+      color = isDark ? AppColors.darkWarning : AppColors.lightWarning;
+      label = '${stock.toStringAsFixed(0)} u';
+    } else {
+      color = isDark ? AppColors.darkSuccess : AppColors.lightSuccess;
+      label = '${stock.toStringAsFixed(0)} u';
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: color),
       ),
     );
   }

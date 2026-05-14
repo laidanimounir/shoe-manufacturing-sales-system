@@ -6,7 +6,7 @@ class SaleProduct {
   final String? sku;
   final String? barcode;
   final double sellingPrice;
-  final int availableQty;
+  final double availableQty;
   final String sourceType;
   final double unitCost;
 
@@ -29,72 +29,89 @@ class ProductSearchService {
   }) async {
     final client = SupabaseService.client;
 
-    var invQuery = client
-        .from('inventory')
-        .select('quantity, product_id, products!inner(id, name, sku, barcode, selling_price, is_active)')
-        .eq('products.is_active', true);
-
-    if (warehouseId.isNotEmpty) {
-      invQuery = invQuery.eq('warehouse_id', warehouseId);
-    }
+    var productQuery = client
+        .from('products')
+        .select('*')
+        .eq('is_active', true);
 
     if (query != null && query.isNotEmpty) {
-      invQuery = invQuery.or(
-        'products.name.ilike.%$query%,products.sku.ilike.%$query%,products.barcode.ilike.%$query%',
+      productQuery = productQuery.or(
+        'name.ilike.%$query%,sku.ilike.%$query%,barcode.ilike.%$query%',
       );
     }
 
-    final rows = await invQuery;
-    final results = <SaleProduct>[];
+    final productsData = await productQuery;
+    if ((productsData as List).isEmpty) return [];
 
-    for (final row in rows as List) {
-      final p = row['products'] as Map;
+    final inventoryData = await client
+        .from('inventory')
+        .select('product_id, quantity')
+        .eq('warehouse_id', warehouseId);
+
+    final inventoryMap = <String, double>{};
+    for (final row in inventoryData as List) {
+      final pid = row['product_id'] as String;
+      final qty = (row['quantity'] as num?)?.toDouble() ?? 0;
+      inventoryMap[pid] = qty;
+    }
+
+    final manufacturedData = await client
+        .from('production_stock_entries')
+        .select('product_id');
+    final manufacturedIds = (manufacturedData as List)
+        .map((r) => r['product_id'] as String)
+        .toSet();
+
+    final purchasedData = await client
+        .from('purchase_order_items')
+        .select('product_id')
+        .eq('item_type', 'product');
+    final purchasedIds = (purchasedData as List)
+        .map((r) => r['product_id'] as String)
+        .toSet();
+
+    final results = <SaleProduct>[];
+    for (final p in (productsData as List)) {
       final pId = p['id'] as String;
-      final name = p['name'] as String;
-      final sku = p['sku'] as String?;
-      final barcode = p['barcode'] as String?;
-      final price = (p['selling_price'] as num?)?.toDouble() ?? 0;
-      final qty = (row['quantity'] as num?)?.toInt() ?? 0;
 
       String sourceType = 'purchased';
-      double unitCost = 0.0;
-
-      final pseCheck = await client
-          .from('production_stock_entries')
-          .select('id')
-          .eq('product_id', pId)
-          .limit(1);
-      if ((pseCheck as List).isNotEmpty) {
+      if (manufacturedIds.contains(pId)) {
         sourceType = 'manufactured';
+      } else if (purchasedIds.contains(pId)) {
+        sourceType = 'purchased';
+      }
+
+      double unitCost = 0;
+      if (sourceType == 'manufactured') {
         final costData = await client
-            .from('production_cost_summaries')
+            .from('production_stock_entries')
             .select('unit_cost')
-            .eq('order_id', (pseCheck).first['order_id'])
+            .eq('product_id', pId)
+            .order('created_at', ascending: false)
             .limit(1);
         if ((costData as List).isNotEmpty) {
           unitCost = (costData.first['unit_cost'] as num?)?.toDouble() ?? 0;
         }
-      } else {
-        final purchases = await client
+      } else if (sourceType == 'purchased') {
+        final costData = await client
             .from('purchase_order_items')
             .select('unit_cost')
             .eq('product_id', pId)
             .eq('item_type', 'product')
             .order('id', ascending: false)
             .limit(1);
-        if ((purchases as List).isNotEmpty) {
-          sourceType = 'purchased';
-          unitCost = (purchases.first['unit_cost'] as num?)?.toDouble() ?? 0;
+        if ((costData as List).isNotEmpty) {
+          unitCost = (costData.first['unit_cost'] as num?)?.toDouble() ?? 0;
         }
       }
 
       results.add(SaleProduct(
         id: pId,
-        name: name,
-        sku: sku,
-        barcode: barcode,
-        sellingPrice: price,
-        availableQty: qty,
+        name: p['name'] as String,
+        sku: p['sku'] as String?,
+        barcode: p['barcode'] as String?,
+        sellingPrice: (p['selling_price'] as num?)?.toDouble() ?? 0,
+        availableQty: inventoryMap[pId] ?? 0,
         sourceType: sourceType,
         unitCost: unitCost,
       ));
@@ -109,27 +126,38 @@ class ProductSearchService {
   }) async {
     final client = SupabaseService.client;
 
-    final row = await client
+    final pData = await client
+        .from('products')
+        .select('*')
+        .eq('barcode', barcode)
+        .eq('is_active', true)
+        .maybeSingle();
+
+    if (pData == null) return null;
+
+    final pId = pData['id'] as String;
+
+    final inv = await client
         .from('inventory')
-        .select('quantity, product_id, products!inner(id, name, sku, barcode, selling_price, is_active)')
-        .eq('products.barcode', barcode)
-        .eq('products.is_active', true)
+        .select('quantity')
+        .eq('product_id', pId)
         .eq('warehouse_id', warehouseId)
         .maybeSingle();
 
-    if (row == null) return null;
-
-    final p = row['products'] as Map;
-    final qty = (row['quantity'] as num?)?.toInt() ?? 0;
+    final manufacturedCheck = await client
+        .from('production_stock_entries')
+        .select('id')
+        .eq('product_id', pId)
+        .limit(1);
 
     return SaleProduct(
-      id: p['id'] as String,
-      name: p['name'] as String,
-      sku: p['sku'] as String?,
-      barcode: p['barcode'] as String?,
-      sellingPrice: (p['selling_price'] as num?)?.toDouble() ?? 0,
-      availableQty: qty,
-      sourceType: 'manufactured',
+      id: pId,
+      name: pData['name'] as String,
+      sku: pData['sku'] as String?,
+      barcode: pData['barcode'] as String?,
+      sellingPrice: (pData['selling_price'] as num?)?.toDouble() ?? 0,
+      availableQty: (inv?['quantity'] as num?)?.toDouble() ?? 0,
+      sourceType: (manufacturedCheck as List).isNotEmpty ? 'manufactured' : 'purchased',
       unitCost: 0,
     );
   }

@@ -12,6 +12,7 @@ class Product {
   final double sellingPrice;
   final String? imageUrl;
   final bool isActive;
+  final double totalStock;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -27,6 +28,7 @@ class Product {
     this.sellingPrice = 0,
     this.imageUrl,
     this.isActive = true,
+    this.totalStock = 0,
     this.createdAt,
     this.updatedAt,
   });
@@ -44,6 +46,7 @@ class Product {
       sellingPrice: (map['selling_price'] as num?)?.toDouble() ?? 0,
       imageUrl: map['image_url'] as String?,
       isActive: map['is_active'] as bool? ?? true,
+      totalStock: (map['total_stock'] as num?)?.toDouble() ?? 0,
       createdAt: map['created_at'] != null
           ? DateTime.tryParse(map['created_at'].toString())
           : null,
@@ -80,6 +83,7 @@ class Product {
     double? sellingPrice,
     String? imageUrl,
     bool? isActive,
+    double? totalStock,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -95,6 +99,7 @@ class Product {
       sellingPrice: sellingPrice ?? this.sellingPrice,
       imageUrl: imageUrl ?? this.imageUrl,
       isActive: isActive ?? this.isActive,
+      totalStock: totalStock ?? this.totalStock,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
