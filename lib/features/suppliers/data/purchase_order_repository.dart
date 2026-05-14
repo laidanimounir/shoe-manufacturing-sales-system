@@ -58,6 +58,7 @@ class PurchaseOrderRepository {
     String? warehouseId,
     required String orderType,
     required double totalAmount,
+    double paidAmount = 0,
     String? notes,
     required List<Map<String, dynamic>> items,
   }) async {
@@ -69,6 +70,7 @@ class PurchaseOrderRepository {
         'warehouse_id': warehouseId,
       'order_type': orderType,
       'total_amount': totalAmount,
+      'paid_amount': paidAmount,
       if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
     };
 
@@ -103,6 +105,47 @@ class PurchaseOrderRepository {
       newData: insertMap,
       description: 'Bon de commande créé',
     );
+
+    if (paidAmount > 0) {
+      await client.from(_paymentsTable).insert({
+        'purchase_order_id': orderId,
+        'supplier_id': supplierId,
+        'amount': paidAmount,
+        'payment_method': 'cash',
+      });
+
+      final supplier = await client
+          .from(_suppliersTable)
+          .select('total_debt')
+          .eq('id', supplierId)
+          .single();
+      final currentDebt = (supplier['total_debt'] as num?)?.toDouble() ?? 0;
+      final newDebt = currentDebt + (totalAmount - paidAmount);
+
+      await client
+          .from(_suppliersTable)
+          .update({'total_debt': newDebt})
+          .eq('id', supplierId);
+
+      await SupabaseService.logAudit(
+        action: 'payment',
+        tableName: _paymentsTable,
+        description: 'Paiement à la création: $paidAmount DZD',
+      );
+    } else {
+      final supplier = await client
+          .from(_suppliersTable)
+          .select('total_debt')
+          .eq('id', supplierId)
+          .single();
+      final currentDebt = (supplier['total_debt'] as num?)?.toDouble() ?? 0;
+      final newDebt = currentDebt + totalAmount;
+
+      await client
+          .from(_suppliersTable)
+          .update({'total_debt': newDebt})
+          .eq('id', supplierId);
+    }
 
     final full = await client
         .from(_table)
@@ -165,7 +208,7 @@ class PurchaseOrderRepository {
               .update({'quantity': currentQty + qty})
               .eq('id', rmId);
         }
-      } else if (itemType == 'product') {
+      } else if (itemType == 'product' || itemType == 'finished_product') {
         final pId = item['product_id'] as String?;
         if (pId != null && warehouseId != null) {
           final existingInv = await client

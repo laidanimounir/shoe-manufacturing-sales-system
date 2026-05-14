@@ -246,7 +246,8 @@ class _DesktopShellState extends State<_DesktopShell> {
     if (location.startsWith('/raw-materials')) return 3;
     if (location.startsWith('/production')) return 4;
     if (location.startsWith('/recipes')) return 5;
-    if (location.startsWith('/suppliers') || location.startsWith('/purchases')) return 6;
+    if (location.startsWith('/suppliers')) return 6;
+    if (location.startsWith('/purchases')) return 7;
     return 0;
   }
 
@@ -287,6 +288,11 @@ class _DesktopShellState extends State<_DesktopShell> {
       label: Text('Fournisseurs'),
     ),
     NavigationRailDestination(
+      icon: Icon(Icons.shopping_cart_outlined),
+      selectedIcon: Icon(Icons.shopping_cart),
+      label: Text('Achats'),
+    ),
+    NavigationRailDestination(
       icon: Icon(Icons.point_of_sale_outlined),
       selectedIcon: Icon(Icons.point_of_sale),
       label: Text('Ventes'),
@@ -325,6 +331,9 @@ class _DesktopShellState extends State<_DesktopShell> {
         break;
       case 6:
         context.go('/suppliers');
+        break;
+      case 7:
+        context.go('/purchases');
         break;
     }
   }

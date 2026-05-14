@@ -99,6 +99,18 @@ class SupplierRepository {
     return Supplier.fromMap(updated);
   }
 
+  static Future<void> delete(String id, String name) async {
+    final client = SupabaseService.client;
+    await client.from(_table).delete().eq('id', id);
+
+    await SupabaseService.logAudit(
+      action: 'delete',
+      tableName: _table,
+      recordId: id,
+      description: 'Fournisseur supprimé : $name',
+    );
+  }
+
   static Future<double> getTotalDebt() async {
     final client = SupabaseService.client;
     final data = await client.from(_table).select('total_debt');

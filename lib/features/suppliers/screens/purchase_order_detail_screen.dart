@@ -111,6 +111,7 @@ class _PurchaseOrderDetailScreenState
               ],
               onSelected: (v) async {
                 if (v == 'receive') {
+                  final messenger = ScaffoldMessenger.of(context);
                   try {
                     await PurchaseOrderRepository.receive(
                       orderId: widget.orderId,
@@ -118,7 +119,7 @@ class _PurchaseOrderDetailScreenState
                     );
                     await _loadData();
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         const SnackBar(
                           content: Text('Commande reçue et stock mis à jour'),
                           behavior: SnackBarBehavior.floating,

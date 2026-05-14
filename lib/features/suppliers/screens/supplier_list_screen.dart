@@ -83,6 +83,34 @@ class _SupplierListScreenState extends ConsumerState<SupplierListScreen> {
     context.push('/suppliers/${s.id}').then((_) => _loadData());
   }
 
+  void _confirmDelete(Supplier s) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirmer la suppression'),
+        content: Text('Supprimer le fournisseur "${s.name}" ?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Annuler')),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () async {
+              try {
+                await SupplierRepository.delete(s.id, s.name);
+                if (ctx.mounted) Navigator.of(ctx).pop();
+                await _loadData();
+              } catch (e) {
+                _showError('Erreur: $e');
+              }
+            },
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -253,6 +281,12 @@ class _SupplierListScreenState extends ConsumerState<SupplierListScreen> {
                               tooltip: 'Modifier',
                               onPressed: () => _onEdit(s),
                             ),
+                            IconButton(
+                              icon: Icon(Icons.delete_outline, size: 18,
+                                  color: isDark ? AppColors.darkError : AppColors.lightError),
+                              tooltip: 'Supprimer',
+                              onPressed: () => _confirmDelete(s),
+                            ),
                           ],
                         )),
                       ],
@@ -324,7 +358,29 @@ class _SupplierListScreenState extends ConsumerState<SupplierListScreen> {
                           ),
                         ),
                       const SizedBox(width: 4),
-                      const Icon(Icons.chevron_right, size: 20),
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert, size: 20),
+                        itemBuilder: (_) => [
+                          const PopupMenuItem(value: 'detail', child: Row(
+                            children: [Icon(Icons.visibility_outlined, size: 18), SizedBox(width: 8), Text('Détails')],
+                          )),
+                          const PopupMenuItem(value: 'edit', child: Row(
+                            children: [Icon(Icons.edit_outlined, size: 18), SizedBox(width: 8), Text('Modifier')],
+                          )),
+                          const PopupMenuItem(value: 'delete', child: Row(
+                            children: [Icon(Icons.delete_outline, size: 18, color: Colors.red), SizedBox(width: 8), Text('Supprimer', style: TextStyle(color: Colors.red))],
+                          )),
+                        ],
+                        onSelected: (value) {
+                          if (value == 'detail') {
+                            _onDetail(s);
+                          } else if (value == 'edit') {
+                            _onEdit(s);
+                          } else if (value == 'delete') {
+                            _confirmDelete(s);
+                          }
+                        },
+                      ),
                     ],
                   ),
                 ),

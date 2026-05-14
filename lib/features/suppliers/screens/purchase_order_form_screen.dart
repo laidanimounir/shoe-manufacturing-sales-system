@@ -22,6 +22,8 @@ class _PurchaseOrderFormScreenState extends State<PurchaseOrderFormScreen> {
   List<Map<String, dynamic>> _warehouses = [];
   final List<Map<String, dynamic>> _itemsList = [];
   bool _isSaving = false;
+  String _paymentOption = 'none';
+  final _partialAmountController = TextEditingController();
 
   @override
   void initState() {
@@ -51,15 +53,17 @@ class _PurchaseOrderFormScreenState extends State<PurchaseOrderFormScreen> {
   @override
   void dispose() {
     _notesController.dispose();
+    _partialAmountController.dispose();
     super.dispose();
   }
 
   void _addItem() {
+    final itemType = _orderType == 'finished_product' ? 'product' : 'raw_material';
     setState(() {
       _itemsList.add({
-        'item_type': _orderType,
-        if (_orderType == 'raw_material') 'raw_material_id': null,
-        if (_orderType == 'product') 'product_id': null,
+        'item_type': itemType,
+        if (itemType == 'raw_material') 'raw_material_id': null,
+        if (itemType == 'product') 'product_id': null,
         'quantity': 1,
         'unit_cost': 0,
       });
@@ -85,6 +89,13 @@ class _PurchaseOrderFormScreenState extends State<PurchaseOrderFormScreen> {
     if (_selectedSupplierId == null) { _showError('Sélectionnez un fournisseur'); return; }
     if (_itemsList.isEmpty) { _showError('Ajoutez au moins un article'); return; }
 
+    final total = _calcTotal();
+    final paidAmount = _paymentOption == 'full'
+        ? total
+        : _paymentOption == 'partial'
+            ? (double.tryParse(_partialAmountController.text.replaceAll(',', '.')) ?? 0)
+            : 0.0;
+
     setState(() => _isSaving = true);
 
     try {
@@ -92,7 +103,8 @@ class _PurchaseOrderFormScreenState extends State<PurchaseOrderFormScreen> {
         supplierId: _selectedSupplierId!,
         warehouseId: _selectedWarehouseId,
         orderType: _orderType,
-        totalAmount: _calcTotal(),
+        totalAmount: total,
+        paidAmount: paidAmount,
         notes: _notesController.text,
         items: _itemsList,
       );
@@ -164,6 +176,8 @@ class _PurchaseOrderFormScreenState extends State<PurchaseOrderFormScreen> {
                   _buildItemsSection(theme, isDark),
                   const SizedBox(height: 16),
                   _buildTotalSection(theme, isDark),
+                  const SizedBox(height: 16),
+                  _buildPaymentSection(theme, isDark),
                   if (!isDesktop) ...[
                     const SizedBox(height: 24),
                     SizedBox(
@@ -327,6 +341,7 @@ class _PurchaseOrderFormScreenState extends State<PurchaseOrderFormScreen> {
 
   Widget _buildItemRow(int index, ThemeData theme, bool isDark) {
     final item = _itemsList[index];
+    final itemType = item['item_type'] as String;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -341,7 +356,7 @@ class _PurchaseOrderFormScreenState extends State<PurchaseOrderFormScreen> {
             children: [
               Expanded(
                 flex: 3,
-                child: _orderType == 'raw_material'
+                child: itemType == 'raw_material'
                     ? _buildRawMaterialDropdown(item, theme)
                     : _buildProductDropdown(item, theme),
               ),
@@ -447,6 +462,87 @@ class _PurchaseOrderFormScreenState extends State<PurchaseOrderFormScreen> {
           validator: (v) => v == null ? 'Obligatoire' : null,
         );
       },
+    );
+  }
+
+  Widget _buildPaymentSection(ThemeData theme, bool isDark) {
+    final total = _calcTotal();
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.cardTheme.color,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.colorScheme.outline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: (isDark ? AppColors.darkSuccess : AppColors.lightSuccess).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.payment, size: 18,
+                    color: isDark ? AppColors.darkSuccess : AppColors.lightSuccess),
+              ),
+              const SizedBox(width: 12),
+              Text('Paiement', style: theme.textTheme.titleMedium),
+            ],
+          ),
+          const SizedBox(height: 16),
+          RadioGroup<String>(
+            groupValue: _paymentOption,
+            onChanged: (v) => setState(() => _paymentOption = v!),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RadioListTile<String>(
+                  title: const Text('Aucun paiement'),
+                  subtitle: Text('Dette de $total DZD', style: theme.textTheme.labelSmall),
+                  value: 'none',
+                  dense: true,
+                ),
+                RadioListTile<String>(
+                  title: const Text('Paiement complet'),
+                  subtitle: Text('$total DZD payé', style: theme.textTheme.labelSmall),
+                  value: 'full',
+                  dense: true,
+                ),
+                RadioListTile<String>(
+                  title: const Text('Paiement partiel'),
+                  value: 'partial',
+                  dense: true,
+                ),
+              ],
+            ),
+          ),
+          if (_paymentOption == 'partial')
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+              child: TextFormField(
+                controller: _partialAmountController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Montant payé',
+                  prefixText: 'DZD ',
+                  hintText: 'Ex: ${(total / 2).toStringAsFixed(0)}',
+                ),
+                validator: (v) {
+                  if (_paymentOption != 'partial') return null;
+                  if (v == null || v.trim().isEmpty) return 'Le montant est obligatoire';
+                  final amount = double.tryParse(v.replaceAll(',', '.'));
+                  if (amount == null || amount <= 0) return 'Montant invalide';
+                  if (amount > total) return 'Ne peut pas dépasser $total DZD';
+                  return null;
+                },
+              ),
+            ),
+        ],
+      ),
     );
   }
 
