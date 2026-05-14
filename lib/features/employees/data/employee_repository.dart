@@ -11,7 +11,7 @@ class EmployeeRepository {
         .select('*, profiles!employees_profile_id_fkey(full_name, phone), warehouses(name)');
 
     if (search != null && search.isNotEmpty) {
-      query = query.ilike('profiles!employees_profile_id_fkey.full_name', '%$search%');
+      query = query.ilike('full_name', '%$search%');
     }
     if (isActive != null) {
       query = query.eq('is_active', isActive);
@@ -43,25 +43,9 @@ class EmployeeRepository {
     DateTime? hireDate,
   }) async {
     final client = SupabaseService.client;
-    final currentUserId = SupabaseService.currentUserId;
-
-    final profileResponse = await client
-        .from('profiles')
-        .insert({
-          'full_name': fullName.trim(),
-          if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
-          'role': 'production_worker',
-          if (warehouseId != null && warehouseId.isNotEmpty)
-            'warehouse_id': warehouseId,
-        })
-        .select()
-        .single();
-
-    final profileId = profileResponse['id'] as String;
 
     final insertMap = {
-      'profile_id': profileId,
-      'created_by': currentUserId,
+      'full_name': fullName.trim(),
       if (warehouseId != null && warehouseId.isNotEmpty)
         'warehouse_id': warehouseId,
       'position': position?.trim().isEmpty == true ? null : position?.trim(),

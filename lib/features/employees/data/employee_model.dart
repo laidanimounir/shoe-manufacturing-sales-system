@@ -32,12 +32,12 @@ class Employee {
   });
 
   factory Employee.fromMap(Map<String, dynamic> map) {
-    String name = map['job_title'] as String? ?? '';
+    String name = map['full_name'] as String? ?? map['job_title'] as String? ?? '';
     String? phone;
     String? profileId;
     final pr = map['profiles'];
     if (pr is Map) {
-      name = pr['full_name'] as String? ?? name;
+      if (name.isEmpty) name = pr['full_name'] as String? ?? '';
       phone = pr['phone'] as String?;
       profileId = pr['id'] as String?;
     }
