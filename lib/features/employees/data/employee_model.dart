@@ -71,7 +71,6 @@ class Employee {
     return {
       'salary_type': salaryType,
       'base_salary': baseSalary,
-      'daily_rate': dailyRate,
       if (position != null) 'position': position,
       if (hireDate != null)
         'hire_date': hireDate!.toIso8601String().split('T').first,

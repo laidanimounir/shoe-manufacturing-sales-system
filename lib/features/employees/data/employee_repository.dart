@@ -51,7 +51,6 @@ class EmployeeRepository {
       'position': position?.trim().isEmpty == true ? null : position?.trim(),
       'salary_type': salaryType,
       'base_salary': baseSalary,
-      'daily_rate': dailyRate,
       if (hireDate != null)
         'hire_date': hireDate.toIso8601String().split('T').first,
     };
@@ -86,7 +85,6 @@ class EmployeeRepository {
       'position': position?.trim().isEmpty == true ? null : position?.trim(),
       'salary_type': salaryType,
       'base_salary': baseSalary,
-      'daily_rate': dailyRate,
       if (hireDate != null)
         'hire_date': hireDate.toIso8601String().split('T').first,
       'updated_at': DateTime.now().toIso8601String(),

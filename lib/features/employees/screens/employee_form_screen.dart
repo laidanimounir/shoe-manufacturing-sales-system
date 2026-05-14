@@ -86,7 +86,6 @@ class _EmployeeFormScreenState extends State<EmployeeFormScreen> {
         await EmployeeRepository.update(
           id: widget.employee!.id, position: _positionController.text,
           salaryType: _salaryType, baseSalary: double.tryParse(_baseController.text.replaceAll(',', '.')) ?? 0,
-          dailyRate: double.tryParse(_dailyController.text.replaceAll(',', '.')) ?? 0,
           hireDate: _hireDate,
         );
       } else {
@@ -94,7 +93,6 @@ class _EmployeeFormScreenState extends State<EmployeeFormScreen> {
           fullName: _nameController.text, position: _positionController.text,
           warehouseId: _selectedWarehouseId, salaryType: _salaryType,
           baseSalary: double.tryParse(_baseController.text.replaceAll(',', '.')) ?? 0,
-          dailyRate: double.tryParse(_dailyController.text.replaceAll(',', '.')) ?? 0,
           hireDate: _hireDate,
         );
       }
