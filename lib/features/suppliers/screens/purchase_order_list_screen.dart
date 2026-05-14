@@ -83,6 +83,172 @@ class _PurchaseOrderListScreenState
     context.push('/purchases/${o.id}').then((_) => _loadData());
   }
 
+  void _onPay(PurchaseOrder o) {
+    context.push('/purchases/${o.id}/payment', extra: o).then((_) => _loadData());
+  }
+
+  Future<void> _showReceivePreviewDialog(PurchaseOrder order) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    List<Map<String, dynamic>> previews;
+
+    try {
+      previews = await PurchaseOrderRepository.getReceivePreview(order.id);
+    } catch (e) {
+      _showError('Erreur de chargement: $e');
+      return;
+    }
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirmation de réception'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Les stocks seront mis à jour avec les nouveaux coûts (WACC) :',
+                  style: TextStyle(fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+                ...previews.map((p) {
+                  final isRM = p['item_type'] == 'raw_material';
+                  final name = p['name'] as String;
+                  final currentQty = p['current_qty'] as double;
+                  final purchaseQty = p['purchase_qty'] as double;
+                  final oldCost = p['old_unit_cost'] as double;
+                  final newCost = p['new_unit_cost'] as double;
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF161B22) : const Color(0xFFF6F8FA),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF30363D) : const Color(0xFFD0D7DE),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              isRM ? Icons.inventory_2 : Icons.inventory,
+                              size: 16,
+                              color: isRM
+                                  ? (isDark ? AppColors.darkWarning : AppColors.lightWarning)
+                                  : (isDark ? AppColors.darkInfo : AppColors.lightInfo),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(name,
+                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        if (isRM) ...[
+                          _previewRow(currentQty.toStringAsFixed(1), 'Qté actuelle'),
+                          _previewRow('+${purchaseQty.toStringAsFixed(1)}', '+ Achat'),
+                          _previewRow(CurrencyFormatter.format(oldCost), 'Ancien coût/unit'),
+                          _previewRow(CurrencyFormatter.format(newCost), 'Nouveau coût/unit (WACC)', highlight: true),
+                        ] else ...[
+                          _previewRow('+${purchaseQty.toStringAsFixed(0)} paires', 'Qté à ajouter'),
+                        ],
+                      ],
+                    ),
+                  );
+                }),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: (isDark ? AppColors.darkWarning : AppColors.lightWarning).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 16,
+                          color: isDark ? AppColors.darkWarning : AppColors.lightWarning),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'WACC: nouvelle moyenne pondérée du coût unitaire après cet achat.',
+                          style: TextStyle(fontSize: 11),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Annuler'),
+          ),
+          FilledButton.icon(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              try {
+                await PurchaseOrderRepository.receive(
+                  orderId: order.id,
+                  warehouseId: order.warehouseId,
+                );
+                await _loadData();
+                if (mounted) {
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Commande reçue et stock mis à jour'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              } catch (e) {
+                _showError('Erreur: $e');
+              }
+            },
+            icon: const Icon(Icons.check_circle, size: 18),
+            label: const Text('Confirmer la réception'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _previewRow(String value, String label, {bool highlight = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 12)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: highlight ? FontWeight.w700 : FontWeight.w600,
+              color: highlight
+                  ? (Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkSuccess
+                      : AppColors.lightSuccess)
+                  : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -244,16 +410,7 @@ class _PurchaseOrderListScreenState
                         DataCell(_buildStatusChip(o.status, o.statusLabel, isDark)),
                         DataCell(Text(AppDateUtils.formatDate(o.createdAt),
                             style: theme.textTheme.bodySmall)),
-                        DataCell(Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.visibility_outlined, size: 18),
-                              tooltip: 'Détails',
-                              onPressed: () => _onDetail(o),
-                            ),
-                          ],
-                        )),
+                        DataCell(_buildActionButtons(o, theme, isDark)),
                       ],
                     );
                   }).toList(),
@@ -324,7 +481,47 @@ class _PurchaseOrderListScreenState
                       ),
                       _buildStatusChip(o.status, o.statusLabel, isDark),
                       const SizedBox(width: 4),
-                      const Icon(Icons.chevron_right, size: 20),
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert, size: 20),
+                        itemBuilder: (_) {
+                          final items = <PopupMenuEntry<String>>[];
+                          if (o.status == 'pending') {
+                            items.add(const PopupMenuItem(
+                                value: 'receive',
+                                child: Row(children: [
+                                  Icon(Icons.check_circle, size: 18, color: Colors.green),
+                                  SizedBox(width: 8),
+                                  Text('Recevoir'),
+                                ])));
+                          }
+                          if (o.status == 'received' && o.debtAmount > 0) {
+                            items.add(const PopupMenuItem(
+                                value: 'pay',
+                                child: Row(children: [
+                                  Icon(Icons.payment, size: 18, color: Colors.blue),
+                                  SizedBox(width: 8),
+                                  Text('Payer'),
+                                ])));
+                          }
+                          items.add(const PopupMenuItem(
+                              value: 'detail',
+                              child: Row(children: [
+                                Icon(Icons.visibility_outlined, size: 18),
+                                SizedBox(width: 8),
+                                Text('Détails'),
+                              ])));
+                          return items;
+                        },
+                        onSelected: (value) {
+                          if (value == 'receive') {
+                            _showReceivePreviewDialog(o);
+                          } else if (value == 'pay') {
+                            _onPay(o);
+                          } else if (value == 'detail') {
+                            _onDetail(o);
+                          }
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -335,6 +532,58 @@ class _PurchaseOrderListScreenState
         ),
       ),
     );
+  }
+
+  Widget _buildActionButtons(PurchaseOrder o, ThemeData theme, bool isDark) {
+    final children = <Widget>[];
+
+    if (o.status == 'pending') {
+      children.add(
+        SizedBox(
+          height: 30,
+          child: FilledButton.tonalIcon(
+            onPressed: () => _showReceivePreviewDialog(o),
+            icon: const Icon(Icons.check_circle, size: 16),
+            label: const Text('Recevoir', style: TextStyle(fontSize: 12)),
+            style: FilledButton.styleFrom(
+              backgroundColor: (isDark ? AppColors.darkSuccess : AppColors.lightSuccess).withValues(alpha: 0.15),
+              foregroundColor: isDark ? AppColors.darkSuccess : AppColors.lightSuccess,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+            ),
+          ),
+        ),
+      );
+      children.add(const SizedBox(width: 4));
+    }
+
+    if (o.status == 'received' && o.debtAmount > 0) {
+      children.add(
+        SizedBox(
+          height: 30,
+          child: FilledButton.tonalIcon(
+            onPressed: () => _onPay(o),
+            icon: const Icon(Icons.payment, size: 16),
+            label: const Text('Payer', style: TextStyle(fontSize: 12)),
+            style: FilledButton.styleFrom(
+              backgroundColor: (isDark ? AppColors.darkInfo : AppColors.lightInfo).withValues(alpha: 0.15),
+              foregroundColor: isDark ? AppColors.darkInfo : AppColors.lightInfo,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+            ),
+          ),
+        ),
+      );
+      children.add(const SizedBox(width: 4));
+    }
+
+    children.add(
+      IconButton(
+        icon: const Icon(Icons.visibility_outlined, size: 18),
+        tooltip: 'Détails',
+        onPressed: () => _onDetail(o),
+      ),
+    );
+
+    return Row(mainAxisSize: MainAxisSize.min, children: children);
   }
 
   Widget _buildStatusChip(String status, String label, bool isDark) {

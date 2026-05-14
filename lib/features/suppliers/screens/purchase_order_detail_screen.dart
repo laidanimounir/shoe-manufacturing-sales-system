@@ -253,39 +253,16 @@ class _PurchaseOrderDetailScreenState
             : 'Détail commande'),
         actions: [
           if (_order != null && _order!.status == 'pending')
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
-              itemBuilder: (_) => [
-                const PopupMenuItem(
-                    value: 'receive',
-                    child: Row(
-                      children: [
-                        Icon(Icons.inventory, size: 18),
-                        SizedBox(width: 8),
-                        Text('Marquer reçu'),
-                      ],
-                    )),
-                const PopupMenuItem(
-                    value: 'cancel',
-                    child: Row(
-                      children: [
-                        Icon(Icons.cancel_outlined, size: 18),
-                        SizedBox(width: 8),
-                        Text('Annuler'),
-                      ],
-                    )),
-              ],
-              onSelected: (v) async {
-                if (v == 'receive') {
-                  await _showReceivePreviewDialog();
-                } else if (v == 'cancel') {
-                  try {
-                    await PurchaseOrderRepository.updateStatus(
-                        widget.orderId, 'cancelled', 'annulée');
-                    await _loadData();
-                  } catch (e) {
-                    _showError('Erreur: $e');
-                  }
+            IconButton(
+              icon: const Icon(Icons.cancel_outlined),
+              tooltip: 'Annuler la commande',
+              onPressed: () async {
+                try {
+                  await PurchaseOrderRepository.updateStatus(
+                      widget.orderId, 'cancelled', 'annulée');
+                  await _loadData();
+                } catch (e) {
+                  _showError('Erreur: $e');
                 }
               },
             ),
@@ -308,6 +285,8 @@ class _PurchaseOrderDetailScreenState
                           _buildItemsTable(theme, isDark),
                           const SizedBox(height: 16),
                           _buildPaymentsSection(theme, isDark, isDesktop),
+                          const SizedBox(height: 16),
+                          _buildActionBar(theme, isDark),
                         ],
                       ),
                     ),
@@ -580,6 +559,92 @@ class _PurchaseOrderDetailScreenState
         ],
       ),
     );
+  }
+
+  Widget _buildActionBar(ThemeData theme, bool isDark) {
+    final o = _order!;
+    if (o.status == 'pending') {
+      return SizedBox(
+        width: double.infinity,
+        height: 48,
+        child: FilledButton.icon(
+          onPressed: _showReceivePreviewDialog,
+          icon: const Icon(Icons.check_circle, size: 20),
+          label: const Text('Confirmer la réception'),
+          style: FilledButton.styleFrom(
+            backgroundColor: isDark ? AppColors.darkSuccess : AppColors.lightSuccess,
+          ),
+        ),
+      );
+    }
+
+    if (o.status == 'received' && o.debtAmount > 0) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: (isDark ? AppColors.darkInfo : AppColors.lightInfo).withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: (isDark ? AppColors.darkInfo : AppColors.lightInfo).withValues(alpha: 0.3),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Montant restant',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.textTheme.bodySmall?.color)),
+                  Text(CurrencyFormatter.format(o.debtAmount),
+                      style: GoogleFonts.jetBrainsMono(
+                          fontSize: 18, fontWeight: FontWeight.w700,
+                          color: isDark ? AppColors.darkError : AppColors.lightError)),
+                ],
+              ),
+            ),
+            FilledButton.icon(
+              onPressed: () {
+                context.push('/purchases/${widget.orderId}/payment', extra: o)
+                    .then((_) => _loadData());
+              },
+              icon: const Icon(Icons.payment, size: 18),
+              label: const Text('Payer'),
+              style: FilledButton.styleFrom(
+                backgroundColor: isDark ? AppColors.darkInfo : AppColors.lightInfo,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (o.status == 'received' && o.debtAmount <= 0) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: (isDark ? AppColors.darkSuccess : AppColors.lightSuccess).withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: (isDark ? AppColors.darkSuccess : AppColors.lightSuccess).withValues(alpha: 0.3),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.check_circle,
+                color: isDark ? AppColors.darkSuccess : AppColors.lightSuccess, size: 20),
+            const SizedBox(width: 8),
+            Text('Entièrement payé ✓',
+                style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.darkSuccess : AppColors.lightSuccess)),
+          ],
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 
   Widget _buildStatusChip(String status, String label, bool isDark) {
