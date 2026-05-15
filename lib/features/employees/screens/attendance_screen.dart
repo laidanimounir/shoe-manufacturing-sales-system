@@ -166,8 +166,14 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildTodayTab(theme, isDark),
-          _buildCalendarTab(theme, isDark),
+          RefreshIndicator(
+            onRefresh: () async => _loadToday(),
+            child: _buildTodayTab(theme, isDark),
+          ),
+          RefreshIndicator(
+            onRefresh: () async => _loadMonth(),
+            child: _buildCalendarTab(theme, isDark),
+          ),
         ],
       ),
     );

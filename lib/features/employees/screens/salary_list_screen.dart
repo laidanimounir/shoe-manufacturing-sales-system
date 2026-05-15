@@ -158,16 +158,22 @@ class _SalaryListScreenState extends ConsumerState<SalaryListScreen>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _isLoading
-                    ? _buildShimmer(isDark)
-                    : _sheets.isEmpty
-                        ? _buildEmpty(theme, 'Aucune fiche de paie')
-                        : _buildSheetsList(theme, isDark),
-                _isLoading
-                    ? _buildShimmer(isDark)
-                    : _report == null
-                        ? _buildEmpty(theme, 'Aucun rapport')
-                        : _buildReport(theme, isDark),
+                RefreshIndicator(
+                  onRefresh: () async => _loadData(),
+                  child: _isLoading
+                      ? _buildShimmer(isDark)
+                      : _sheets.isEmpty
+                          ? _buildEmpty(theme, 'Aucune fiche de paie')
+                          : _buildSheetsList(theme, isDark),
+                ),
+                RefreshIndicator(
+                  onRefresh: () async => _loadData(),
+                  child: _isLoading
+                      ? _buildShimmer(isDark)
+                      : _report == null
+                          ? _buildEmpty(theme, 'Aucun rapport')
+                          : _buildReport(theme, isDark),
+                ),
               ],
             ),
           ),

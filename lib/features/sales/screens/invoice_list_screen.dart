@@ -109,7 +109,16 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> with Sing
         IconButton(icon: const Icon(Icons.add), onPressed: () => context.push('/sales/new'), tooltip: 'Nouvelle vente', style: IconButton.styleFrom(backgroundColor: theme.colorScheme.primaryContainer)),
       ])),
       _buildStatusFilter(theme),
-      Expanded(child: _isLoading ? _buildShimmer(isDark, isDesktop) : _invoices.isEmpty ? _buildEmpty(theme) : _buildTable(_invoices, theme, isDark, isDesktop)),
+      Expanded(
+        child: RefreshIndicator(
+          onRefresh: () async => _loadData(),
+          child: _isLoading
+              ? _buildShimmer(isDark, isDesktop)
+              : _invoices.isEmpty
+                  ? _buildEmpty(theme)
+                  : _buildTable(_invoices, theme, isDark, isDesktop),
+        ),
+      ),
     ]);
   }
 
@@ -122,7 +131,16 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> with Sing
         const SizedBox(width: 8), _summaryCard('Crédit', CurrencyFormatter.format(s['totalDebt'] as double? ?? 0), isDark ? AppColors.darkError : AppColors.lightError, theme, isDark),
         const SizedBox(width: 8), _summaryCard('Nb ventes', '${s['count'] ?? 0}', isDark ? AppColors.darkWarning : AppColors.lightWarning, theme, isDark),
       ])),
-      Expanded(child: _isLoading ? _buildShimmer(isDark, isDesktop) : _todayInvoices.isEmpty ? _buildEmpty(theme, isToday: true) : _buildTable(_todayInvoices, theme, isDark, isDesktop)),
+      Expanded(
+        child: RefreshIndicator(
+          onRefresh: () async => _loadData(),
+          child: _isLoading
+              ? _buildShimmer(isDark, isDesktop)
+              : _todayInvoices.isEmpty
+                  ? _buildEmpty(theme, isToday: true)
+                  : _buildTable(_todayInvoices, theme, isDark, isDesktop),
+        ),
+      ),
     ]);
   }
 
