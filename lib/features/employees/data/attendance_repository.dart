@@ -14,13 +14,55 @@ class AttendanceRepository {
 
   static Future<List<Attendance>> getByMonth(int year, int month) async {
     final client = SupabaseService.client;
-    final data = await client
+
+    final employees = await client
+        .from('employees')
+        .select('id, full_name')
+        .eq('is_active', true)
+        .order('full_name');
+
+    final attendanceRecords = await client
         .from(_table)
-        .select('*, employees!inner(profiles!employees_profile_id_fkey(full_name))')
+        .select('*')
         .gte('date', _monthStart(year, month))
         .lt('date', _monthEnd(year, month))
         .order('date');
-    return (data as List).map((json) => Attendance.fromMap(json)).toList();
+
+    final recordMap = <String, List<Map<String, dynamic>>>{};
+    for (final a in attendanceRecords as List) {
+      final eid = a['employee_id'] as String;
+      recordMap.putIfAbsent(eid, () => []).add(a);
+    }
+
+    final result = <Attendance>[];
+    for (final emp in employees as List) {
+      final eid = emp['id'] as String;
+      final name = emp['full_name'] as String? ?? '';
+      final records = recordMap[eid] ?? [];
+
+      final daysInMonth = DateTime(year, month + 1, 0).day;
+      for (int day = 1; day <= daysInMonth; day++) {
+        final date = DateTime(year, month, day);
+        final dateStr = date.toIso8601String().split('T').first;
+        final record = records.cast<Map<String, dynamic>?>().firstWhere(
+          (r) => r?['date']?.toString() == dateStr,
+          orElse: () => null,
+        );
+
+        if (record != null) {
+          result.add(Attendance(
+            id: record['id'] as String,
+            employeeId: eid,
+            employeeName: name,
+            workDate: date,
+            status: record['status'] as String? ?? 'present',
+            notes: record['notes'] as String?,
+          ));
+        }
+      }
+    }
+
+    return result;
   }
 
   static Future<List<Attendance>> getByEmployee(
@@ -38,13 +80,39 @@ class AttendanceRepository {
 
   static Future<List<Attendance>> getTodayAttendance() async {
     final client = SupabaseService.client;
-    final today = DateTime.now().toIso8601String().split('T').first;
-    final data = await client
+    final today = DateTime.now();
+    final dateStr = today.toIso8601String().split('T').first;
+
+    final employees = await client
+        .from('employees')
+        .select('id, full_name')
+        .eq('is_active', true)
+        .order('full_name');
+
+    final attendanceRecords = await client
         .from(_table)
-        .select('*, employees!inner(profiles!employees_profile_id_fkey(full_name))')
-        .eq('date', today)
-        .order('employee_id');
-    return (data as List).map((json) => Attendance.fromMap(json)).toList();
+        .select()
+        .eq('date', dateStr);
+
+    final recordMap = <String, Map<String, dynamic>>{};
+    for (final a in attendanceRecords as List) {
+      final eid = a['employee_id'] as String;
+      recordMap[eid] = a;
+    }
+
+    return (employees as List).map((emp) {
+      final eid = emp['id'] as String;
+      final name = emp['full_name'] as String? ?? '';
+      final record = recordMap[eid];
+      return Attendance(
+        id: record != null ? record['id'] as String : '',
+        employeeId: eid,
+        employeeName: name,
+        workDate: today,
+        status: record != null ? (record['status'] as String? ?? 'present') : 'absent',
+        notes: record != null ? record['notes'] as String? : null,
+      );
+    }).toList();
   }
 
   static Future<void> upsert(Attendance attendance) async {
