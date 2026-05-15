@@ -145,6 +145,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final settingsAsync = ref.watch(companySettingsProvider);
     final local = ref.watch(localSettingsProvider);
 
+    String _themeToStr(ThemeMode m) {
+      switch (m) {
+        case ThemeMode.light: return 'light';
+        case ThemeMode.dark: return 'dark';
+        default: return 'system';
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Paramètres'),
@@ -197,7 +205,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ButtonSegment(value: 'fr', label: Text('Français')),
                   ButtonSegment(value: 'ar', label: Text('العربية')),
                 ],
-                selected: {local['locale'] ?? 'fr'},
+                selected: {local.locale.languageCode},
                 onSelectionChanged: (v) {
                   ref.read(localSettingsProvider.notifier).setLocale(v.first);
                 },
@@ -212,9 +220,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ButtonSegment(value: 'light', label: Text('Clair')),
                   ButtonSegment(value: 'system', label: Text('Système')),
                 ],
-                selected: {local['themeMode'] ?? 'system'},
+                selected: {_themeToStr(local.themeMode)},
                 onSelectionChanged: (v) {
-                  ref.read(localSettingsProvider.notifier).setThemeMode(v.first);
+                  ref.read(localSettingsProvider.notifier).setTheme(v.first);
                 },
               ),
               const SizedBox(height: 32),
