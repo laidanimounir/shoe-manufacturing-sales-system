@@ -55,6 +55,7 @@ import '../../features/finance/screens/expense_list_screen.dart';
 import '../../features/finance/screens/expense_form_screen.dart';
 import '../../features/finance/screens/audit_log_screen.dart';
 import '../../features/finance/data/expense_model.dart';
+import '../../features/settings/screens/settings_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
     ref.keepAlive();
@@ -330,6 +331,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'audit-logs',
             builder: (context, state) => const AuditLogScreen(),
           ),
+          GoRoute(
+            path: '/settings',
+            name: 'settings',
+            builder: (context, state) => const SettingsScreen(),
+          ),
         ],
       ),
     ],
@@ -390,6 +396,7 @@ class _DesktopShellState extends State<_DesktopShell> {
     if (location.startsWith('/finance')) return 13;
     if (location.startsWith('/expenses')) return 14;
     if (location.startsWith('/audit-logs')) return 15;
+    if (location.startsWith('/settings')) return 16;
     return 0;
   }
 
@@ -474,6 +481,11 @@ class _DesktopShellState extends State<_DesktopShell> {
       selectedIcon: Icon(Icons.history),
       label: Text('Audit'),
     ),
+    NavigationRailDestination(
+      icon: Icon(Icons.settings_outlined),
+      selectedIcon: Icon(Icons.settings),
+      label: Text('Paramètres'),
+    ),
   ];
 
   void _onDestinationSelected(int index) {
@@ -525,6 +537,9 @@ class _DesktopShellState extends State<_DesktopShell> {
         break;
       case 15:
         context.go('/audit-logs');
+        break;
+      case 16:
+        context.go('/settings');
         break;
     }
   }

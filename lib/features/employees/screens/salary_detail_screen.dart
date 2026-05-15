@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/pdf_generator.dart';
 import '../data/salary_sheet_model.dart';
 import '../data/salary_repository.dart';
 
@@ -117,7 +118,17 @@ class _SalaryDetailScreenState extends State<SalaryDetailScreen> {
     final sheet = _sheet;
 
     return Scaffold(
-      appBar: AppBar(title: Text(sheet?.monthLabel ?? 'Fiche de paie')),
+      appBar: AppBar(
+        title: Text(sheet?.monthLabel ?? 'Fiche de paie'),
+        actions: [
+          if (sheet != null)
+            IconButton(
+              icon: const Icon(Icons.print_outlined, size: 20),
+              tooltip: 'Imprimer fiche',
+              onPressed: () => PdfGenerator.generateSalarySheet(sheet),
+            ),
+        ],
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : sheet == null

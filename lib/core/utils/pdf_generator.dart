@@ -20,8 +20,8 @@ class PdfGenerator {
   }
 
   static Future<void> generateTicket(
-    InvoiceModel invoice,
-    List<InvoiceItemModel> items,
+    Invoice invoice,
+    List<InvoiceItem> items,
   ) async {
     final settings = await _getSettings();
     final pdf = pw.Document();
@@ -163,7 +163,7 @@ class PdfGenerator {
               pw.Center(
                 child: pw.Text(
                   settings.ticketFooter,
-                  style: const pw.TextStyle(
+                  style: pw.TextStyle(
                     fontSize: 9,
                     fontStyle: pw.FontStyle.italic,
                   ),
@@ -182,8 +182,8 @@ class PdfGenerator {
   }
 
   static Future<void> generateFacture(
-    InvoiceModel invoice,
-    List<InvoiceItemModel> items,
+    Invoice invoice,
+    List<InvoiceItem> items,
   ) async {
     final settings = await _getSettings();
     final pdf = pw.Document();

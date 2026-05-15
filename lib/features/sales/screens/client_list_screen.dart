@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/excel_exporter.dart';
 import '../data/client_repository.dart';
 import '../data/client_model.dart';
 
@@ -116,8 +117,15 @@ class _ClientListScreenState extends ConsumerState<ClientListScreen> {
                         const SizedBox(height: 4),
                         Text('Gestion des clients', style: theme.textTheme.bodySmall),
                       ])),
-                      if (isDesktop)
-                        OutlinedButton.icon(onPressed: _onAdd, icon: const Icon(Icons.add, size: 18), label: const Text('Nouveau client'))
+                      if (isDesktop) ...[
+                        OutlinedButton.icon(onPressed: _onAdd, icon: const Icon(Icons.add, size: 18), label: const Text('Nouveau client')),
+                        const SizedBox(width: 8),
+                        OutlinedButton.icon(
+                          onPressed: () => ExcelExporter.exportClients(),
+                          icon: const Icon(Icons.table_chart_outlined, size: 18),
+                          label: const Text('Exporter'),
+                        ),
+                      ]
                       else
                         IconButton.filled(onPressed: _onAdd, icon: const Icon(Icons.add), tooltip: 'Nouveau client'),
                     ]),

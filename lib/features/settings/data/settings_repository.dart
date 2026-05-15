@@ -59,7 +59,6 @@ class SettingsRepository {
     await client.storage.from(_bucket).upload(
           fileName,
           imageFile,
-          fileOptions: const FileOptions(upsert: true),
         );
 
     final url = client.storage.from(_bucket).getPublicUrl(fileName);

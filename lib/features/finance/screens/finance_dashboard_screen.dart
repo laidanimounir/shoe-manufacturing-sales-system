@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/excel_exporter.dart';
 import '../data/finance_summary_model.dart';
 import '../data/finance_repository.dart';
 import '../providers/finance_provider.dart';
@@ -67,6 +68,16 @@ class _FinanceDashboardScreenState
     final isDesktop = MediaQuery.of(context).size.width >= 900;
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Finance'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.table_chart_outlined, size: 20),
+            tooltip: 'Exporter Excel',
+            onPressed: () => ExcelExporter.exportFinanceSummary(_selectedYear),
+          ),
+        ],
+      ),
       body: CustomScrollView(slivers: [
         SliverToBoxAdapter(
           child: Padding(

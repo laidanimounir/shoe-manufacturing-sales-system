@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/excel_exporter.dart';
 import '../data/employee_model.dart';
 import '../data/employee_repository.dart';
 import '../data/advance_repository.dart';
@@ -95,7 +96,15 @@ class _EmployeeListScreenState extends ConsumerState<EmployeeListScreen> {
             Text('Employés', style: theme.textTheme.headlineMedium), const SizedBox(height: 4),
             Text('Gestion des employés', style: theme.textTheme.bodySmall),
           ])),
-          if (isDesktop) OutlinedButton.icon(onPressed: _onAdd, icon: const Icon(Icons.add, size: 18), label: const Text('Nouvel employé'))
+          if (isDesktop) ...[
+            OutlinedButton.icon(onPressed: _onAdd, icon: const Icon(Icons.add, size: 18), label: const Text('Nouvel employé')),
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: () => ExcelExporter.exportEmployees(),
+              icon: const Icon(Icons.table_chart_outlined, size: 18),
+              label: const Text('Exporter'),
+            ),
+          ]
           else IconButton.filled(onPressed: _onAdd, icon: const Icon(Icons.add), tooltip: 'Nouvel employé'),
         ]),
         const SizedBox(height: 16),

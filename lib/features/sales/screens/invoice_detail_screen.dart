@@ -6,6 +6,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_utils.dart';
+import '../../../core/utils/pdf_generator.dart';
 import '../data/invoice_model.dart';
 import '../data/invoice_item_model.dart';
 import '../data/invoice_repository.dart';
@@ -55,7 +56,23 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
     final isDesktop = MediaQuery.of(context).size.width >= 900;
 
     return Scaffold(
-      appBar: AppBar(title: Text(_invoice != null ? _invoice!.invoiceNumber : 'Facture')),
+      appBar: AppBar(
+        title: Text(_invoice != null ? _invoice!.invoiceNumber : 'Facture'),
+        actions: [
+          if (_invoice != null && _items.isNotEmpty) ...[
+            IconButton(
+              icon: const Icon(Icons.receipt_outlined, size: 20),
+              tooltip: 'Ticket',
+              onPressed: () => PdfGenerator.generateTicket(_invoice!, _items),
+            ),
+            IconButton(
+              icon: const Icon(Icons.description_outlined, size: 20),
+              tooltip: 'Facture A4',
+              onPressed: () => PdfGenerator.generateFacture(_invoice!, _items),
+            ),
+          ],
+        ],
+      ),
       body: _isLoading ? _buildShimmer(isDark) : _invoice == null ? const Center(child: Text('Facture introuvable'))
         : SingleChildScrollView(padding: EdgeInsets.all(isDesktop ? 24 : 16), child: Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 1000), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           _buildHeader(theme, isDark, isDesktop),
