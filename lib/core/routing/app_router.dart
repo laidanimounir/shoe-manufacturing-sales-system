@@ -50,6 +50,11 @@ import '../../features/employees/screens/salary_list_screen.dart';
 import '../../features/employees/screens/salary_detail_screen.dart';
 import '../../features/production/screens/production_cost_screen.dart';
 import '../../features/employees/data/employee_model.dart';
+import '../../features/finance/screens/finance_dashboard_screen.dart';
+import '../../features/finance/screens/expense_list_screen.dart';
+import '../../features/finance/screens/expense_form_screen.dart';
+import '../../features/finance/screens/audit_log_screen.dart';
+import '../../features/finance/data/expense_model.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
     ref.keepAlive();
@@ -303,6 +308,28 @@ final routerProvider = Provider<GoRouter>((ref) {
               return SalaryDetailScreen(sheetId: id);
             },
           ),
+          GoRoute(
+            path: '/finance',
+            name: 'finance',
+            builder: (context, state) =>
+                const FinanceDashboardScreen(),
+          ),
+          GoRoute(
+            path: '/expenses',
+            name: 'expenses',
+            builder: (context, state) => const ExpenseListScreen(),
+          ),
+          GoRoute(
+            path: '/expenses/new',
+            name: 'expense-new',
+            builder: (context, state) =>
+                ExpenseFormScreen(expense: state.extra as Expense?),
+          ),
+          GoRoute(
+            path: '/audit-logs',
+            name: 'audit-logs',
+            builder: (context, state) => const AuditLogScreen(),
+          ),
         ],
       ),
     ],
@@ -360,6 +387,9 @@ class _DesktopShellState extends State<_DesktopShell> {
     if (location.startsWith('/employees')) return 10;
     if (location.startsWith('/attendance')) return 11;
     if (location.startsWith('/salaries')) return 12;
+    if (location.startsWith('/finance')) return 13;
+    if (location.startsWith('/expenses')) return 14;
+    if (location.startsWith('/audit-logs')) return 15;
     return 0;
   }
 
@@ -430,9 +460,19 @@ class _DesktopShellState extends State<_DesktopShell> {
       label: Text('Salaires'),
     ),
     NavigationRailDestination(
-      icon: Icon(Icons.account_balance_outlined),
-      selectedIcon: Icon(Icons.account_balance),
+      icon: Icon(Icons.dashboard_outlined),
+      selectedIcon: Icon(Icons.dashboard),
       label: Text('Finance'),
+    ),
+    NavigationRailDestination(
+      icon: Icon(Icons.money_off_outlined),
+      selectedIcon: Icon(Icons.money_off),
+      label: Text('Dépenses'),
+    ),
+    NavigationRailDestination(
+      icon: Icon(Icons.history_outlined),
+      selectedIcon: Icon(Icons.history),
+      label: Text('Audit'),
     ),
   ];
 
@@ -476,6 +516,15 @@ class _DesktopShellState extends State<_DesktopShell> {
         break;
       case 12:
         context.go('/salaries');
+        break;
+      case 13:
+        context.go('/finance');
+        break;
+      case 14:
+        context.go('/expenses');
+        break;
+      case 15:
+        context.go('/audit-logs');
         break;
     }
   }

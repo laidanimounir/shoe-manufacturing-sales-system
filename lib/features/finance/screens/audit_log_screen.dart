@@ -61,7 +61,29 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
         SliverToBoxAdapter(child: Padding(padding: EdgeInsets.all(isDesktop ? 24 : 16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           TextField(controller: _searchController, decoration: InputDecoration(hintText: 'Rechercher...', prefixIcon: const Icon(Icons.search, size: 20), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(vertical: 10)), onSubmitted: (_) => _loadData()),
           const SizedBox(height: 12),
-          SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: _actions.entries.map((e) => Padding(padding: const EdgeInsets.only(right: 8), child: FilterChip(label: Text(e.value), selected: _actionFilter == e.key, onSelected: (v) { setState(() { _actionFilter = e.key; _isLoading = true; }); _loadData(); }, selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15))))).toList())),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _actions.entries
+                  .map((e) => Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          label: Text(e.value),
+                          selected: _actionFilter == e.key,
+                          onSelected: (v) {
+                            setState(() {
+                              _actionFilter = e.key;
+                              _isLoading = true;
+                            });
+                            _loadData();
+                          },
+                          selectedColor: theme.colorScheme.primary
+                              .withValues(alpha: 0.15),
+                        ),
+                      ))
+                  .toList(),
+            ),
+          ),
         ]))),
         if (_isLoading) _buildShimmer(isDark, isDesktop)
         else if (_logs.isEmpty) _buildEmpty(theme)

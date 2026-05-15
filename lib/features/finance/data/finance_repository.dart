@@ -36,7 +36,6 @@ class FinanceRepository {
     final invoices = results[0] as List;
     final totalRevenue = sumInvoices(invoices, 'total_amount');
     final totalPaid = sumInvoices(invoices, 'paid_amount');
-    final clientDebt = totalRevenue - totalPaid;
 
     final productionCost =
         sumInvoices(results[1] as List, 'total_cost');
