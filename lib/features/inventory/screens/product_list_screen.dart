@@ -144,7 +144,9 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
         },
         child: Focus(
           autofocus: true,
-          child: CustomScrollView(
+          child: RefreshIndicator(
+            onRefresh: () async => _loadData(),
+            child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
@@ -201,7 +203,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                 _buildMobileCards(theme, isDark),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
-          ),
+          )),
         ),
       ),
     );

@@ -263,7 +263,9 @@ class _PurchaseOrderListScreenState
         },
         child: Focus(
           autofocus: true,
-          child: CustomScrollView(
+          child: RefreshIndicator(
+            onRefresh: () async => _loadData(),
+            child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
@@ -313,7 +315,7 @@ class _PurchaseOrderListScreenState
                 _buildMobileCards(theme, isDark),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
-          ),
+          )),
         ),
       ),
     );

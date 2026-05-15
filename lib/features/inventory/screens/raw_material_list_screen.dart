@@ -104,7 +104,9 @@ class _RawMaterialListScreenState extends ConsumerState<RawMaterialListScreen> {
         },
         child: Focus(
           autofocus: true,
-          child: CustomScrollView(
+          child: RefreshIndicator(
+            onRefresh: () async => _loadData(),
+            child: CustomScrollView(
             slivers: [
               if (_lowStockItems.isNotEmpty)
                 SliverToBoxAdapter(
@@ -178,7 +180,7 @@ class _RawMaterialListScreenState extends ConsumerState<RawMaterialListScreen> {
                 _buildMobileCards(theme, isDark),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
-          ),
+          )),
         ),
       ),
     );

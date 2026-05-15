@@ -6,6 +6,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../shared/widgets/confirm_delete_dialog.dart';
 import '../data/expense_model.dart';
 import '../data/expense_repository.dart';
 import '../providers/finance_provider.dart';
@@ -57,33 +58,20 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
     });
   }
 
-  void _confirmDelete(Expense e) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Supprimer'),
-        content: Text('Supprimer cette dépense ?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Annuler')),
-          FilledButton(
-            style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error),
-            onPressed: () async {
-              try {
-                await ExpenseRepository.delete(e.id, e.category);
-                if (ctx.mounted) Navigator.of(ctx).pop();
-                await _loadData();
-              } catch (ex) {
-                _showError('Erreur: $ex');
-              }
-            },
-            child: const Text('Supprimer'),
-          ),
-        ],
-      ),
+  void _confirmDelete(Expense e) async {
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      itemName: e.category,
+      subtitle: 'Cette action est irreversible.',
     );
+    if (confirmed && mounted) {
+      try {
+        await ExpenseRepository.delete(e.id, e.category);
+        await _loadData();
+      } catch (ex) {
+        _showError('Erreur: $ex');
+      }
+    }
   }
 
   @override
@@ -106,7 +94,9 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: CustomScrollView(slivers: [
+      body: RefreshIndicator(
+        onRefresh: () async => _loadData(),
+        child: CustomScrollView(slivers: [
         if (_categorySummary.isNotEmpty)
           SliverToBoxAdapter(
             child: Container(
@@ -144,7 +134,7 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
         else
           _buildMobileCards(theme, isDark),
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
-      ]),
+      ])),
     );
   }
 

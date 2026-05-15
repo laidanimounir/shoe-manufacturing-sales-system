@@ -129,7 +129,9 @@ class _WarehouseListScreenState extends ConsumerState<WarehouseListScreen> {
         },
         child: Focus(
           autofocus: true,
-          child: CustomScrollView(
+          child: RefreshIndicator(
+            onRefresh: () async => _loadWarehouses(),
+            child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
@@ -185,7 +187,7 @@ class _WarehouseListScreenState extends ConsumerState<WarehouseListScreen> {
                 _buildMobileCards(theme, isDark),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
-          ),
+          )),
         ),
       ),
     );

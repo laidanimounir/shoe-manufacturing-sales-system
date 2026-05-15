@@ -7,6 +7,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/excel_exporter.dart';
+import '../../../shared/widgets/confirm_delete_dialog.dart';
 import '../data/client_repository.dart';
 import '../data/client_model.dart';
 
@@ -73,25 +74,20 @@ class _ClientListScreenState extends ConsumerState<ClientListScreen> {
   void _onEdit(Client c) => context.push('/clients/new', extra: c).then((_) => _loadData());
   void _onDetail(Client c) => context.push('/clients/${c.id}').then((_) => _loadData());
 
-  void _confirmDelete(Client c) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Confirmer la suppression'),
-        content: Text('Supprimer le client "${c.fullName}" ?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Annuler')),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
-            onPressed: () async {
-              try { await ClientRepository.delete(c.id, c.fullName); if (ctx.mounted) Navigator.of(ctx).pop(); await _loadData(); }
-              catch (e) { _showError('Erreur: $e'); }
-            },
-            child: const Text('Supprimer'),
-          ),
-        ],
-      ),
+  void _confirmDelete(Client c) async {
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      itemName: c.fullName,
+      subtitle: 'Les factures et paiements de ce client seront conservés.',
     );
+    if (confirmed && mounted) {
+      try {
+        await ClientRepository.delete(c.id, c.fullName);
+        await _loadData();
+      } catch (e) {
+        _showError('Erreur: $e');
+      }
+    }
   }
 
   @override
@@ -105,7 +101,9 @@ class _ClientListScreenState extends ConsumerState<ClientListScreen> {
         bindings: { if (isDesktop) const SingleActivator(LogicalKeyboardKey.keyN, control: true): _onAdd },
         child: Focus(
           autofocus: true,
-          child: CustomScrollView(
+          child: RefreshIndicator(
+            onRefresh: () async => _loadData(),
+            child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
@@ -142,7 +140,7 @@ class _ClientListScreenState extends ConsumerState<ClientListScreen> {
               else _buildMobileCards(theme, isDark),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
-          ),
+          )),
         ),
       ),
     );

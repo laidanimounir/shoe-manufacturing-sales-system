@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../shared/widgets/confirm_delete_dialog.dart';
 import '../data/supplier_model.dart';
 import '../data/supplier_repository.dart';
 
@@ -83,32 +84,20 @@ class _SupplierListScreenState extends ConsumerState<SupplierListScreen> {
     context.push('/suppliers/${s.id}').then((_) => _loadData());
   }
 
-  void _confirmDelete(Supplier s) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Confirmer la suppression'),
-        content: Text('Supprimer le fournisseur "${s.name}" ?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Annuler')),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            onPressed: () async {
-              try {
-                await SupplierRepository.delete(s.id, s.name);
-                if (ctx.mounted) Navigator.of(ctx).pop();
-                await _loadData();
-              } catch (e) {
-                _showError('Erreur: $e');
-              }
-            },
-            child: const Text('Supprimer'),
-          ),
-        ],
-      ),
+  void _confirmDelete(Supplier s) async {
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      itemName: s.name,
+      subtitle: 'Cette action supprimera aussi les commandes et paiements associés.',
     );
+    if (confirmed && mounted) {
+      try {
+        await SupplierRepository.delete(s.id, s.name);
+        await _loadData();
+      } catch (e) {
+        _showError('Erreur: $e');
+      }
+    }
   }
 
   @override
@@ -125,7 +114,9 @@ class _SupplierListScreenState extends ConsumerState<SupplierListScreen> {
         },
         child: Focus(
           autofocus: true,
-          child: CustomScrollView(
+          child: RefreshIndicator(
+            onRefresh: () async => _loadData(),
+            child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
@@ -175,7 +166,7 @@ class _SupplierListScreenState extends ConsumerState<SupplierListScreen> {
                 _buildMobileCards(theme, isDark),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
-          ),
+          )),
         ),
       ),
     );

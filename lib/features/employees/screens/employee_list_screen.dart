@@ -7,6 +7,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/excel_exporter.dart';
+import '../../../shared/widgets/confirm_delete_dialog.dart';
 import '../data/employee_model.dart';
 import '../data/employee_repository.dart';
 import '../data/advance_repository.dart';
@@ -73,23 +74,25 @@ class _EmployeeListScreenState extends ConsumerState<EmployeeListScreen> {
     ));
   }
 
-  void _confirmDelete(Employee e) {
-    showDialog(context: context, builder: (ctx) => AlertDialog(
-      title: const Text('Confirmer'),
-      content: Text('Supprimer ${e.fullName} ?'),
-      actions: [
-        TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Annuler')),
-        FilledButton(style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
-          onPressed: () async { try { await EmployeeRepository.delete(e.id, e.fullName); if (ctx.mounted) Navigator.of(ctx).pop(); await _loadData(); } catch (ex) { _showError('Erreur: $ex'); } },
-          child: const Text('Supprimer')),
-      ],
-    ));
+  void _confirmDelete(Employee e) async {
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      itemName: e.fullName,
+    );
+    if (confirmed && mounted) {
+      try {
+        await EmployeeRepository.delete(e.id, e.fullName);
+        await _loadData();
+      } catch (ex) {
+        _showError('Erreur: $ex');
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context); final isDark = theme.brightness == Brightness.dark; final isDesktop = MediaQuery.of(context).size.width >= 900;
-    return Scaffold(body: CallbackShortcuts(bindings: {if (isDesktop) const SingleActivator(LogicalKeyboardKey.keyN, control: true): _onAdd}, child: Focus(autofocus: true, child: CustomScrollView(slivers: [
+    return Scaffold(body: CallbackShortcuts(bindings: {if (isDesktop) const SingleActivator(LogicalKeyboardKey.keyN, control: true): _onAdd}, child: Focus(autofocus: true, child: RefreshIndicator(onRefresh: () async => _loadData(), child: CustomScrollView(slivers: [
       SliverToBoxAdapter(child: Padding(padding: EdgeInsets.all(isDesktop ? 24 : 16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -119,7 +122,7 @@ class _EmployeeListScreenState extends ConsumerState<EmployeeListScreen> {
       else if (_employees.isEmpty) _buildEmpty(theme)
       else if (isDesktop) _buildDesktop(theme, isDark) else _buildMobile(theme, isDark),
       const SliverToBoxAdapter(child: SizedBox(height: 24)),
-    ]))));
+    ])))));
   }
 
   Widget _buildDesktop(ThemeData theme, bool isDark) => SliverToBoxAdapter(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 24), child: Container(decoration: BoxDecoration(color: theme.cardTheme.color, borderRadius: BorderRadius.circular(8), border: Border.all(color: theme.colorScheme.outline)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

@@ -57,7 +57,9 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text("Journal d'audit")),
-      body: CustomScrollView(slivers: [
+      body: RefreshIndicator(
+        onRefresh: () async => _loadData(),
+        child: CustomScrollView(slivers: [
         SliverToBoxAdapter(child: Padding(padding: EdgeInsets.all(isDesktop ? 24 : 16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           TextField(controller: _searchController, decoration: InputDecoration(hintText: 'Rechercher...', prefixIcon: const Icon(Icons.search, size: 20), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(vertical: 10)), onSubmitted: (_) => _loadData()),
           const SizedBox(height: 12),
@@ -89,7 +91,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
         else if (_logs.isEmpty) _buildEmpty(theme)
         else if (isDesktop) _buildDesktop(theme, isDark) else _buildMobile(theme, isDark),
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
-      ]),
+      ])),
     );
   }
 
